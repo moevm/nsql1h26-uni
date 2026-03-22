@@ -1,0 +1,36 @@
+.footer {
+  background: white;
+  border-top: 1px solid #eef2f6;
+  padding: 20px 30px;
+  margin-top: 40px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.adminLoginLink {
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 0.8rem;
+  transition: color 0.2s ease;
+}
+
+.adminLoginLink:hover {
+  color: #94a3b8;
+  text-decoration: underline;
+}
+
+.adminLoginLink:focus-visible {
+  outline: 2px solid #94a3b8;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.adminLoginLink:focus:not(:focus-visible) {
+  outline: none;
+}
