@@ -1,0 +1,136 @@
+.contentWrapper {
+  min-height: 100dvh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.authLogo {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.authLogo span {
+  font-weight: 700;
+  font-size: 2rem;
+  color: #1e3c5c;
+}
+
+.screenTitle {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #0b253b;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.formWrapper {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+  width: 100%;
+  max-width: 500px;
+}
+
+.formContainer {
+  width: 100%;
+  background: #f9fcff;
+  border: 1px solid #e2eaf2;
+  border-radius: 16px;
+  padding: 30px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formLabel {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #1e3c5c;
+}
+
+.formInput {
+  width: 100%;
+  padding: 14px 18px;
+  border: 1px solid #d0dbe8;
+  border-radius: 60px;
+  font-size: 1rem;
+  background: white;
+  transition: all 0.2s;
+}
+
+.formInput:focus-visible {
+  outline: 2px solid #a3c0e0;
+  outline-offset: 1px;
+}
+
+.formInput:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.btn {
+  padding: 14px 28px;
+  border-radius: 60px;
+  border: none;
+  font-weight: 600;
+  font-size: 1rem;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btnPrimary {
+  background: #1e3c5c;
+  border: 1px solid #1e3c5c;
+  color: white;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: #0f2a44;
+}
+
+.btnPrimary:focus-visible {
+  outline: 2px solid #a3c0e0;
+  outline-offset: 2px;
+}
+
+.btnPrimary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 10px 16px;
+  border-radius: 40px;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 640px) {
+  .contentWrapper {
+    padding: 16px;
+  }
+
+  .authLogo span {
+    font-size: 1.75rem;
+  }
+
+  .screenTitle {
+    font-size: 1.3rem;
+    margin-bottom: 16px;
+  }
+
+  .formContainer {
+    padding: 20px;
+    border-radius: 14px;
+  }
+}

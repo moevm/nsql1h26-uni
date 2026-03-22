@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
+import LoginPage from './pages/LoginPage';
 
 // Временные заглушки для страниц
 const HomePage = () => (
@@ -31,25 +32,45 @@ const AboutPage = () => (
   </div>
 );
 
-const LoginPage = () => (
+const AdminPage = () => (
   <div style={{ textAlign: 'center', padding: '50px' }}>
-    <h1>Вход</h1>
-    <p>Страница входа в разработке</p>
+    <h1>Админ-панель</h1>
+    <p>Страница в разработке</p>
   </div>
 );
 
 function App() {
   return (
     <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/calculator" element={<CalculatorPage />} />
-          <Route path="/statistics" element={<StatisticsPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/login" element={<LoginPage />} />
-        </Routes>
-      </Layout>
+    <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        
+        <Route path="/" element={
+          <Layout>
+            <HomePage />
+          </Layout>
+        } />
+        <Route path="/calculator" element={
+          <Layout>
+            <CalculatorPage />
+          </Layout>
+        } />
+        <Route path="/statistics" element={
+          <Layout>
+            <StatisticsPage />
+          </Layout>
+        } />
+        <Route path="/about" element={
+          <Layout>
+            <AboutPage />
+          </Layout>
+        } />
+        <Route path="/admin" element={
+          <Layout>
+            <AdminPage />
+          </Layout>
+        } />
+      </Routes>
     </Router>
   );
 }
