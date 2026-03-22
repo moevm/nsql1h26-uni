@@ -1,0 +1,115 @@
+.header {
+  background: white;
+  border-bottom: 1px solid #eef2f6;
+  padding: 0 30px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  height: 70px;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: #1e3c5c;
+  text-decoration: none;
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+  transition: color 0.2s ease, opacity 0.2s ease, text-shadow 0.2s ease;
+}
+
+.logo:hover {
+  color: #16324d;
+  opacity: 0.95;
+  text-shadow: 0 1px 10px rgba(30, 60, 92, 0.12);
+}
+
+.nav {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+}
+
+.navLink:hover {
+  color: #1e3c5c;
+  background: #f3f7ff;
+  text-decoration: none;
+}
+
+.navLink {
+  color: #4a5b6e;
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+.navLinkActive {
+  color: #1e3c5c;
+  background: #e8f1ff;
+  text-decoration: none;
+}
+
+.adminLink {
+  background: #1e3c5c;
+  color: white;
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 40px;
+  font-size: 0.9rem;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.adminLink:hover {
+  background: #0f2a44;
+}
+
+.logo,
+.navLink,
+.adminLink {
+  transition: color 0.2s ease, background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.navLink:focus-visible,
+.adminLink:focus-visible,
+.logo:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (max-width: 900px) {
+  .header {
+    padding: 0 16px;
+  }
+
+  .container {
+    gap: 16px;
+    height: 64px;
+  }
+
+  .nav {
+    gap: 18px;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .adminLink {
+    padding: 8px 12px;
+  }
+}
