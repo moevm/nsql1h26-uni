@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
 import LoginPage from './pages/LoginPage';
+import AboutPage from './pages/AboutPage';
 
 // Временные заглушки для страниц
 const HomePage = () => (
@@ -21,13 +22,6 @@ const CalculatorPage = () => (
 const StatisticsPage = () => (
   <div style={{ textAlign: 'center', padding: '50px' }}>
     <h1>Статистика</h1>
-    <p>Страница в разработке</p>
-  </div>
-);
-
-const AboutPage = () => (
-  <div style={{ textAlign: 'center', padding: '50px' }}>
-    <h1>О проекте</h1>
     <p>Страница в разработке</p>
   </div>
 );
