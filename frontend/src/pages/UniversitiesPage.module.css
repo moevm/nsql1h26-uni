@@ -1,0 +1,304 @@
+.page {
+  min-height: 100vh;
+}
+
+.container {
+  margin: 0 auto;
+  max-width: 1200px;
+}
+
+.screenTitle {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #0b253b;
+  margin-bottom: 20px;
+}
+
+.searchCard {
+  background: #f2f6fa;
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 30px;
+}
+
+.searchRow {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 14px 18px;
+  border: 1px solid #d0dbe8;
+  border-radius: 60px;
+  font-size: 1rem;
+  background: white;
+}
+
+.searchInput:focus {
+  outline: 2px solid #a3c0e0;
+}
+
+.filterGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.citySearchBlock {
+  min-width: 280px;
+  flex: 1 1 320px;
+}
+
+.cityInputWrap {
+  position: relative;
+}
+
+.citySearchInput {
+  width: 100%;
+  cursor: text;
+}
+
+.citySearchInput:focus {
+  outline: 2px solid #a3c0e0;
+}
+
+.cityOptions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: #ffffff;
+  border: 1px solid #cddbeb;
+  border-radius: 12px;
+  box-shadow: 0 10px 18px rgba(8, 28, 48, 0.12);
+  padding: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.cityOption {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  padding: 9px 10px;
+  color: #1e3c5c;
+  cursor: pointer;
+  font-size: 0.92rem;
+}
+
+.cityOption:hover {
+  background: #eef4fb;
+}
+
+.cityOptionsEmpty {
+  padding: 10px;
+  color: #6a7f96;
+  font-size: 0.9rem;
+}
+
+.filterSelect {
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 40px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  color: #1e3c5c;
+  cursor: pointer;
+}
+
+.filterSelect:focus {
+  outline: 2px solid #a3c0e0;
+}
+
+.resetBtn {
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 40px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  color: #1e3c5c;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.resetBtn:hover {
+  background: #eef2f6;
+}
+
+.resultBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0 18px;
+}
+
+.resultCount {
+  font-weight: 600;
+  color: #0b253b;
+}
+
+.sortSelect {
+  padding: 8px 16px;
+  border-radius: 40px;
+  border: 1px solid #cbd5e1;
+  background: white;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.sortSelect:focus {
+  outline: 2px solid #a3c0e0;
+}
+
+.universitiesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.universityCard {
+  display: grid;
+  grid-template-columns: 220px 100px 130px 1fr 1fr;
+  align-items: center;
+  padding: 16px 20px;
+  background: #f9fcff;
+  border: 1px solid #e2eaf2;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  gap: 15px;
+}
+
+.universityCard:hover {
+  background: #eef4fa;
+  border-color: #1e3c5c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.uniName {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #0b253b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.uniRating {
+  background: #e6edf5;
+  padding: 5px 10px;
+  border-radius: 40px;
+  font-size: 0.9rem;
+  color: #1e3c5c;
+  text-align: center;
+  width: fit-content;
+}
+
+.uniCity {
+  color: #4b637a;
+  font-size: 0.95rem;
+}
+
+.uniStats {
+  display: flex;
+  gap: 20px;
+  color: #4b637a;
+  font-size: 0.95rem;
+}
+
+.uniDorm, .uniMilitary {
+  white-space: nowrap;
+}
+
+.uniPrograms {
+  color: #1e3c5c;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: right;
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 20px;
+  margin-top: 25px;
+}
+
+.paginationInfo {
+  color: #4b637a;
+  font-size: 0.9rem;
+}
+
+.pageNumbers {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.pageBtn {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #d0dbe8;
+  background: white;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pageBtn:hover:not(:disabled) {
+  background: #eef2f6;
+  border-color: #1e3c5c;
+}
+
+.pageBtn.active {
+  background: #1e3c5c;
+  color: white;
+  border-color: #1e3c5c;
+}
+
+.pageBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dots {
+  color: #4b637a;
+  padding: 0 4px;
+}
+
+.progressLine {
+  height: 4px;
+  background: #e2eaf2;
+  border-radius: 4px;
+  margin: 20px 0 5px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 4px;
+  background: #1e3c5c;
+  border-radius: 4px;
+}
+
+.loadingStatus {
+  text-align: right;
+  font-size: 0.9rem;
+  color: #4b637a;
+}
+
+@media (max-width: 760px) {
+  .citySearchBlock {
+    min-width: 100%;
+    flex-basis: 100%;
+  }
+}
