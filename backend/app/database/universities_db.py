@@ -3,7 +3,7 @@ from .admins_collection_controller import AdminsCollectionController
 from .programs_collection_controller import ProgramsCollectionController
 from .universities_collection_controller import UniversitiesCollectionController
 
-class UniversitiesBataBase:
+class UniversitiesDataBase:
     def __init__(self, urlDB: str, nameDB: str):
         self.__client = None
         self.__db = None
@@ -15,10 +15,13 @@ class UniversitiesBataBase:
         self.__programsCollectionController = None
 
     def connect_to_db(self):
-        self.__client = MongoClient(self.__urlDB)
-        self.__db = self.__client[self.__nameDB]
+        try:
+            self.__client = MongoClient(self.__urlDB)
+            self.__db = self.__client[self.__nameDB]
 
-        self.put_collections_from_db()
+            self.put_collections_from_db()
+        except Exception as e:
+            print("Fail connect to db. Error:", e)
 
     def create_collections(self, validation_admins_schema : dict, validation_universities_schema : dict,
                            validation_programs_schema : dict):
@@ -35,6 +38,9 @@ class UniversitiesBataBase:
 
         self.put_collections_from_db()
 
+    def get_admin_collection(self) -> AdminsCollectionController:
+        return self.__adminsCollectionController
+
     def find_collection(self, collectionName: str) -> bool:
         listOfCollectionsNames = self.__db.list_collection_names()
         return collectionName in listOfCollectionsNames
@@ -42,10 +48,12 @@ class UniversitiesBataBase:
     def put_collections_from_db(self):
         if self.find_collection("admins"):
             self.__adminsCollectionController = AdminsCollectionController(self.__db["admins"])
+            self.__adminsCollectionController.create_index("username")
         if self.find_collection("universities"):
             self.__universitiesCollectionController = UniversitiesCollectionController(self.__db["universities"])
         if self.find_collection("programs"):
             self.__programsCollectionController = ProgramsCollectionController(self.__db["programs"])
 
     def close_db(self):
-        self.__client.close()
+        if self.__client:
+            self.__client.close()

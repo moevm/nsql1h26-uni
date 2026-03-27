@@ -1,4 +1,4 @@
-from .universities_db import UniversitiesBataBase
+from .universities_db import UniversitiesDataBase
 import os
 from dotenv import load_dotenv
 
@@ -6,10 +6,21 @@ load_dotenv()
 
 _db_instance = None
 
+def check_db_env(*arrayEnvElements):
+    elementsEnvNotFounded = []
+    for el in arrayEnvElements:
+        if not os.getenv(el):
+            elementsEnvNotFounded.append(el)
+    if elementsEnvNotFounded:
+        raise Exception(f"Invalid .env file, not founded: {", ".join(elementsEnvNotFounded)}")
+
 def get_db():
     global _db_instance
     if _db_instance is None:
-        _db_instance = UniversitiesBataBase(
+
+        check_db_env('DATABASE_TYPE', 'DATABASE_HOST', 'DATABASE_PORT', 'DATABASE_NAME')
+
+        _db_instance = UniversitiesDataBase(
             f"{os.getenv('DATABASE_TYPE')}://{os.getenv('DATABASE_HOST')}:{os.getenv('DATABASE_PORT')}/",
             os.getenv('DATABASE_NAME')
         )
