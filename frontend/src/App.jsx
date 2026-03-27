@@ -3,15 +3,9 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
 import LoginPage from './pages/LoginPage';
 import AboutPage from './pages/AboutPage';
+import UniversitiesPage from './pages/UniversitiesPage';
 
 // Временные заглушки для страниц
-const HomePage = () => (
-  <div style={{ textAlign: 'center', padding: '50px' }}>
-    <h1>Главная страница</h1>
-    <p>Список вузов будет здесь</p>
-  </div>
-);
-
 const CalculatorPage = () => (
   <div style={{ textAlign: 'center', padding: '50px' }}>
     <h1>Калькулятор ЕГЭ</h1>
@@ -41,7 +35,7 @@ function App() {
         
         <Route path="/" element={
           <Layout>
-            <HomePage />
+            <UniversitiesPage />
           </Layout>
         } />
         <Route path="/calculator" element={
