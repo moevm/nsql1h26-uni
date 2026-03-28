@@ -6,9 +6,14 @@ class AdminsCollectionController:
     def __init__(self, collection: Collection):
         self.__collection = collection
 
-    def create_index(self, field: str) -> bool:
+    def __check_collection(self):
         if not self.__collection:
             print("No collection admins found!")
+            return False
+        return True
+
+    def create_index(self, field: str) -> bool:
+        if not self.__check_collection:
             return False
         try:
             self.__collection.create_index([(field, 1)], unique=True)
@@ -25,8 +30,7 @@ class AdminsCollectionController:
 
     def add_admin(self, username: str, password: str) -> str | None:
         """Возвращает username если удалось добавить админа, иначе None"""
-        if not self.__collection:
-            print("No collection admins found!")
+        if not self.__check_collection:
             return None
         try:
             hashPassword = self.__get_hash_by_username_password(username, password)
@@ -47,8 +51,7 @@ class AdminsCollectionController:
     def find_admin(self, username: str, password: str) -> dict | None:
         """Возвращает все поля найденного админа в виде словаря.
         Или None, если не удалось найти."""
-        if not self.__collection:
-            print("No collection admins found!")
+        if not self.__check_collection:
             return None
         hashPassword = self.__get_hash_by_username_password(username, password)
         adminFilter = {
