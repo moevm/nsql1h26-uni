@@ -7,12 +7,12 @@ load_dotenv()
 _db_instance = None
 
 def check_db_env(*arrayEnvElements):
-    elementsEnvNotFounded = []
+    elementsEnvNotFound = []
     for el in arrayEnvElements:
         if not os.getenv(el):
-            elementsEnvNotFounded.append(el)
-    if elementsEnvNotFounded:
-        raise Exception(f"Invalid .env file, not founded: {", ".join(elementsEnvNotFounded)}")
+            elementsEnvNotFound.append(el)
+    if elementsEnvNotFound:
+        raise Exception(f"Invalid .env file, not found: {', '.join(elementsEnvNotFound)}")
 
 def get_db():
     global _db_instance

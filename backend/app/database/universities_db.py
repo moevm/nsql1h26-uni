@@ -14,14 +14,17 @@ class UniversitiesDataBase:
         self.__universitiesCollectionController = None
         self.__programsCollectionController = None
 
-    def connect_to_db(self):
+    def connect_to_db(self) -> bool:
         try:
-            self.__client = MongoClient(self.__urlDB)
-            self.__db = self.__client[self.__nameDB]
+            if not self.__db:
+                self.__client = MongoClient(self.__urlDB)
+                self.__db = self.__client[self.__nameDB]
 
             self.put_collections_from_db()
+            return True
         except Exception as e:
             print("Fail connect to db. Error:", e)
+            return False
 
     def create_collections(self, validation_admins_schema : dict, validation_universities_schema : dict,
                            validation_programs_schema : dict):
@@ -38,8 +41,23 @@ class UniversitiesDataBase:
 
         self.put_collections_from_db()
 
-    def get_admin_collection(self) -> AdminsCollectionController:
+    def get_admins_collection(self) -> AdminsCollectionController | None:
+        if not self.__db:
+            print("No connect to db!")
+            return None
         return self.__adminsCollectionController
+
+    def get_programs_collection(self) -> ProgramsCollectionController | None:
+        if not self.__db:
+            print("No connect to db!")
+            return None
+        return self.__programsCollectionController
+
+    def get_universities_collection(self) -> UniversitiesCollectionController | None:
+        if not self.__db:
+            print("No connect to db!")
+            return None
+        return self.__universitiesCollectionController
 
     def find_collection(self, collectionName: str) -> bool:
         listOfCollectionsNames = self.__db.list_collection_names()
