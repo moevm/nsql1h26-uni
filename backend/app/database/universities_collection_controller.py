@@ -6,11 +6,16 @@ class UniversitiesCollectionController:
     def __init__(self, collection : Collection):
         self.__collection = collection
 
+    def __check_collection(self):
+        if not self.__collection:
+            print("No collection universities found!")
+            return False
+        return True
+
     def create_index(self, field: str) -> bool:
         """TODO: видно, что все контроллеры коллекций имеют схожие методы и поля.
         Так что есть смысл в дальнейшем обернуть index и поле collection в один абстрактный класс."""
-        if not self.__collection:
-            print("No collection admins found!")
+        if not self.__check_collection():
             return False
         try:
             self.__collection.create_index([(field, 1)], unique=True)
@@ -22,8 +27,7 @@ class UniversitiesCollectionController:
     def add_university(self, name: str, city: str, has_dormitory: bool, military_dept: bool,
                        website: str, comment: str = None) -> str | None:
         """Вернет id университета в случае успешного добавление. Иначе - None."""
-        if not self.__collection:
-            print("No collection universities found!")
+        if not self.__check_collection():
             return None
         try:
             university = {
@@ -48,8 +52,7 @@ class UniversitiesCollectionController:
     def find_university_by_name(self, name: str) -> dict | None:
         """Возвращает все поля найденного университета в виде словаря.
         Или None, если не удалось найти."""
-        if not self.__collection:
-            print("No collection universities found!")
+        if not self.__check_collection():
             return None
         universityFilter = {
             "name": name
@@ -65,8 +68,7 @@ class UniversitiesCollectionController:
         except Exception as e:
             print("Error id:", e)
             return None
-        if not self.__collection:
-            print("No collection universities found!")
+        if not self.__check_collection():
             return None
         universityFilter = {
             "_id": id_obj
@@ -76,8 +78,7 @@ class UniversitiesCollectionController:
 
     def find_universities_by_prefix(self, name: str) -> list:
         """Возвращает список всех найденных университетов. Элементы списка - словари со всеми полями."""
-        if not self.__collection:
-            print("No collection universities found!")
+        if not self.__check_collection():
             return []
         universityFilter = {
             "name": {"$regex": f"^{name}"}
@@ -89,8 +90,7 @@ class UniversitiesCollectionController:
     def find_universities_by_filters(self, city: str = None, has_dormitory: bool = None, military_dept: bool = None,
                                      website: str = None, comment: str = None) -> list:
         """Возвращает список всех найденных университетов. Элементы списка - словари со всеми полями."""
-        if not self.__collection:
-            print("No collection universities found!")
+        if not self.__check_collection():
             return []
         universityFilter = {}
         if city:
@@ -101,7 +101,7 @@ class UniversitiesCollectionController:
             universityFilter["military_dept"] = military_dept
         if website:
             universityFilter["website"] = website
-        if comment:
+        if comment is not None:
             universityFilter["comment"] = comment
         universitiesInDB = self.__collection.find(universityFilter)
         result = [university for university in universitiesInDB]
@@ -110,8 +110,7 @@ class UniversitiesCollectionController:
     def update_university(self, id_str: str, name: str = None, city: str = None, has_dormitory: bool = None,
                           military_dept: bool = None, website: str = None, comment: str = None) -> bool:
         """Вернет true в случае успешного обновления. Иначе - false."""
-        if not self.__collection:
-            print("No collection universities found!")
+        if not self.__check_collection():
             return False
         try:
             universityFilter = {
@@ -128,7 +127,7 @@ class UniversitiesCollectionController:
                 universityNewData["military_dept"] = military_dept
             if website:
                 universityNewData["website"] = website
-            if comment:
+            if comment is not None:
                 universityNewData["comment"] = comment
             universityNewData["updatedAt"] = datetime.datetime.now(datetime.timezone.utc)
             resultUpdate = self.__collection.update_one(universityFilter,{"$set": universityNewData})
@@ -141,8 +140,7 @@ class UniversitiesCollectionController:
 
     def delete_university(self, id_str: str) -> bool:
         """Вернет true в случае успешного удаления. Иначе - false."""
-        if not self.__collection:
-            print("No collection universities found!")
+        if not self.__check_collection():
             return False
         try:
             universityFilter = {
