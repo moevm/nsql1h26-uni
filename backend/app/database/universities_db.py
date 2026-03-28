@@ -76,6 +76,7 @@ class UniversitiesDataBase:
             self.__adminsCollectionController.create_index("username")
         if self.find_collection("universities"):
             self.__universitiesCollectionController = UniversitiesCollectionController(self.__db["universities"])
+            self.__universitiesCollectionController.create_index("name")
         if self.find_collection("programs"):
             self.__programsCollectionController = ProgramsCollectionController(self.__db["programs"])
 
