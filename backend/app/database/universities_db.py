@@ -60,10 +60,17 @@ class UniversitiesDataBase:
         return self.__universitiesCollectionController
 
     def find_collection(self, collectionName: str) -> bool:
+        if not self.__db:
+            print("No connect to db!")
+            return False
         listOfCollectionsNames = self.__db.list_collection_names()
         return collectionName in listOfCollectionsNames
 
     def put_collections_from_db(self):
+        if not self.__db:
+            print("No connect to db!")
+            return
+
         if self.find_collection("admins"):
             self.__adminsCollectionController = AdminsCollectionController(self.__db["admins"])
             self.__adminsCollectionController.create_index("username")
