@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.database.universities_db import UniversitiesDataBase
 from app.core.dependencies import get_db_connection
 from app.models import AdminCreate, AdminLogin
+from utils import *
 
 router = APIRouter(prefix="/admins", tags=["admins"])
 
@@ -14,8 +15,8 @@ async def create_admin(
     admins_controller = db.get_admins_collection()
     if not admins_controller:
         raise HTTPException(status_code=500, detail="Database not available")
-
-    result = admins_controller.add_admin(admin.username, admin.password)
+    hashed_password = get_hash_by_username_password(admin.username, admin.password)
+    result = admins_controller.add_admin(admin.username, hashed_password)
     if not result:
         raise HTTPException(status_code=400, detail="Failed to create admin")
 
@@ -30,8 +31,8 @@ async def login_admin(
     admins_controller = db.get_admins_collection()
     if not admins_controller:
         raise HTTPException(status_code=500, detail="Database not available")
-
-    admin_data = admins_controller.find_admin(admin.username, admin.password)
+    hashed_password = get_hash_by_username_password(admin.username, admin.password)
+    admin_data = admins_controller.find_admin(admin.username, hashed_password)
     if not admin_data:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
