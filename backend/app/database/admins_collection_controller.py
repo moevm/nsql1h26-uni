@@ -22,8 +22,9 @@ class AdminsCollectionController:
             print("Error create index:", e)
             return False
 
-    def add_admin(self, username: str, password: str) -> str | None:
-        """Возвращает id если удалось добавить админа, иначе None"""
+    def add_admin(self, username: str, password: str) -> ObjectId | None:
+        """Возвращает id если удалось добавить админа, иначе None.
+        _id возвращается в виде ObjectId, так что необходимо перевести его в str."""
         if not self.__check_collection:
             return None
         try:
@@ -36,7 +37,7 @@ class AdminsCollectionController:
 
             resultAdd = self.__collection.insert_one(admin)
             if resultAdd.acknowledged:
-                return str(resultAdd.inserted_id)
+                return resultAdd.inserted_id
             return None
         except Exception as e:
             print("Error add admin:", e)
