@@ -130,7 +130,7 @@ const UniversitiesPage = () => {
   };
   
   const handleUniversityClick = (id) => {
-    navigate(`/university/${id}`);
+    navigate(`/universities/${id}`);
   };
   
   return (
