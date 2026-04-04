@@ -4,6 +4,7 @@ import Layout from './components/Layout/Layout';
 import LoginPage from './pages/LoginPage';
 import AboutPage from './pages/AboutPage';
 import UniversitiesPage from './pages/UniversitiesPage';
+import UniversityDetailPage from './pages/UniversityDetailPage';
 
 // Временные заглушки для страниц
 const CalculatorPage = () => (
@@ -46,6 +47,11 @@ function App() {
         <Route path="/statistics" element={
           <Layout>
             <StatisticsPage />
+          </Layout>
+        } />
+        <Route path="/universities/:id" element={
+          <Layout>
+            <UniversityDetailPage />
           </Layout>
         } />
         <Route path="/about" element={
