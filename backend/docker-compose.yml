@@ -1,5 +1,5 @@
 services:
-  mongodb:
+  db:
     image: mongo:6.0
     container_name: mongodb_university
     restart: unless-stopped
@@ -14,7 +14,7 @@ services:
     build: .
     container_name: db_init
     depends_on:
-      - mongodb
+      - db
     environment:
       - DATABASE_TYPE=mongodb
       - DATABASE_HOST=mongodb
@@ -32,7 +32,7 @@ services:
     container_name: fastapi_app
     restart: unless-stopped
     depends_on:
-      - mongodb
+      - db
       - db-init
     ports:
       - "8000:8000"
