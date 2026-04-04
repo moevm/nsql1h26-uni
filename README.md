@@ -16,3 +16,22 @@
 <a href=" ./../../../actions/workflows/6_report.yml" >![6. Пояснительная записка]( ./../../actions/workflows/6_report.yml/badge.svg)</a>
 
 <a href=" ./../../../actions/workflows/7_app_is_ready.yml" >![7. App is ready]( ./../../actions/workflows/7_app_is_ready.yml/badge.svg)</a>
+
+## Docker запуск (backend + db + frontend)
+
+### Production-like режим
+
+```bash
+docker compose up --build
+```
+
+- Frontend: `http://localhost:3000`
+- Backend (FastAPI): `http://localhost:8080`
+
+### Dev режим  с hot-reload
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
+
+Изменения в коде применяются автоматически без пересборки образа.
