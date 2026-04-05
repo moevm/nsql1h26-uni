@@ -154,18 +154,404 @@
   color: #1e3c5c;
 }
 
-.scoreRange {
+.budgetDropdown {
+  position: relative;
+  min-width: 260px;
+  flex: 1 1 260px;
+}
+
+.budgetDropdownTrigger {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d0dbe8;
+  border-radius: 40px;
+  background: white;
+  color: #1e3c5c;
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.budgetDropdownTrigger:hover {
+  background: #f8fafc;
+}
+
+.budgetDropdownTrigger:focus {
+  outline: 2px solid #a3c0e0;
+}
+
+.budgetDropdownChevron {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.budgetDropdownPanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  width: min(400px, 100%);
+  background: white;
+  border: 1px solid #d0dbe8;
+  border-radius: 16px;
+  box-shadow: 0 16px 30px rgba(8, 28, 48, 0.12);
+  padding: 14px;
+}
+
+.budgetRange {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.budgetInput {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid #d0dbe8;
+  border-radius: 40px;
+  font-size: 0.9rem;
+}
+
+.budgetRangeSeparator {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.budgetDropdownError {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.budgetDropdownFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid #eef2f6;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.budgetDropdownClose {
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #1e3c5c;
+  border-radius: 40px;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.budgetDropdownClose:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: #f8fafc;
+  color: #94a3b8;
+}
+
+.scoreRange {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 10px;
 }
 
 .scoreInput {
-  width: 120px;
+  width: 100%;
+  min-width: 0;
   padding: 8px 12px;
   border: 1px solid #d0dbe8;
   border-radius: 40px;
   font-size: 0.9rem;
+}
+
+.scoreDropdown {
+  position: relative;
+  min-width: 240px;
+  flex: 1 1 240px;
+}
+
+.scoreDropdownTrigger {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d0dbe8;
+  border-radius: 40px;
+  background: white;
+  color: #1e3c5c;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.scoreDropdownTrigger:hover {
+  background: #f8fafc;
+}
+
+.scoreDropdownTrigger:focus {
+  outline: 2px solid #a3c0e0;
+}
+
+.scoreDropdownChevron {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.scoreDropdownPanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  width: min(380px, 100%);
+  background: white;
+  border: 1px solid #d0dbe8;
+  border-radius: 16px;
+  box-shadow: 0 16px 30px rgba(8, 28, 48, 0.12);
+  padding: 14px;
+}
+
+.scoreRangeSeparator {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.scoreDropdownError {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.scoreDropdownFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid #eef2f6;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.scoreDropdownClose {
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #1e3c5c;
+  border-radius: 40px;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.scoreDropdownClose:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: #f8fafc;
+  color: #94a3b8;
+}
+
+.paidDropdown {
+  position: relative;
+  min-width: 260px;
+  flex: 1 1 260px;
+}
+
+.paidDropdownTrigger {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d0dbe8;
+  border-radius: 40px;
+  background: white;
+  color: #1e3c5c;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.paidDropdownTrigger:hover {
+  background: #f8fafc;
+}
+
+.paidDropdownTrigger:focus {
+  outline: 2px solid #a3c0e0;
+}
+
+.paidDropdownChevron {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.paidDropdownPanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  width: min(400px, 100%);
+  background: white;
+  border: 1px solid #d0dbe8;
+  border-radius: 16px;
+  box-shadow: 0 16px 30px rgba(8, 28, 48, 0.12);
+  padding: 14px;
+}
+
+.paidRange {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.paidInput {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid #d0dbe8;
+  border-radius: 40px;
+  font-size: 0.9rem;
+}
+
+.paidRangeSeparator {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.paidDropdownError {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.paidDropdownFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid #eef2f6;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.paidDropdownClose {
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #1e3c5c;
+  border-radius: 40px;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.paidDropdownClose:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: #f8fafc;
+  color: #94a3b8;
+}
+
+.educationFormDropdown {
+  position: relative;
+  min-width: 240px;
+  flex: 1 1 240px;
+}
+
+.educationFormDropdownTrigger {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d0dbe8;
+  border-radius: 40px;
+  background: white;
+  color: #1e3c5c;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.educationFormDropdownTrigger:hover {
+  background: #f8fafc;
+}
+
+.educationFormDropdownTrigger:focus {
+  outline: 2px solid #a3c0e0;
+}
+
+.educationFormDropdownChevron {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.educationFormDropdownPanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  width: min(320px, 100%);
+  background: white;
+  border: 1px solid #d0dbe8;
+  border-radius: 16px;
+  box-shadow: 0 16px 30px rgba(8, 28, 48, 0.12);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.educationFormOption {
+  border: 1px solid #d0dbe8;
+  background: white;
+  color: #1e3c5c;
+  border-radius: 12px;
+  padding: 9px 12px;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.educationFormOption:hover {
+  background: #f8fafc;
+}
+
+.educationFormOptionActive {
+  background: #eef4fa;
+  border-color: #1e3c5c;
 }
 
 .subjectInput {
@@ -174,6 +560,136 @@
   border: 1px solid #d0dbe8;
   border-radius: 40px;
   font-size: 0.9rem;
+}
+
+.subjectDropdown {
+  position: relative;
+  min-width: 240px;
+  flex: 1 1 240px;
+}
+
+.subjectDropdownTrigger {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d0dbe8;
+  border-radius: 40px;
+  background: white;
+  color: #1e3c5c;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.budgetDropdownTrigger > span:first-child,
+.scoreDropdownTrigger > span:first-child,
+.paidDropdownTrigger > span:first-child,
+.educationFormDropdownTrigger > span:first-child,
+.subjectDropdownTrigger > span:first-child {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.subjectDropdownTrigger:hover {
+  background: #f8fafc;
+}
+
+.subjectDropdownTrigger:focus {
+  outline: 2px solid #a3c0e0;
+}
+
+.subjectDropdownChevron {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.subjectDropdownPanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  width: min(420px, 100%);
+  background: white;
+  border: 1px solid #d0dbe8;
+  border-radius: 16px;
+  box-shadow: 0 16px 30px rgba(8, 28, 48, 0.12);
+  padding: 14px;
+}
+
+.subjectDropdownSearch {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d0dbe8;
+  border-radius: 40px;
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+}
+
+.subjectDropdownSearch:focus {
+  outline: 2px solid #a3c0e0;
+}
+
+.subjectOptionsList {
+  max-height: 240px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.subjectOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: #0b253b;
+  cursor: pointer;
+}
+
+.subjectOption:hover {
+  background: #f8fafc;
+}
+
+.subjectOption input {
+  accent-color: #1e3c5c;
+}
+
+.subjectOptionsEmpty {
+  padding: 10px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.subjectDropdownFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid #eef2f6;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.subjectDropdownClose {
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #1e3c5c;
+  border-radius: 40px;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .resetFiltersBtn {
@@ -376,7 +892,33 @@
   }
   
   .scoreInput,
+  .budgetInput,
+  .paidInput,
   .subjectInput {
     width: 100%;
+  }
+
+  .budgetDropdown,
+  .scoreDropdown,
+  .paidDropdown,
+  .educationFormDropdown,
+  .subjectDropdown {
+    width: 100%;
+  }
+
+  .budgetDropdownPanel,
+  .scoreDropdownPanel,
+  .paidDropdownPanel,
+  .educationFormDropdownPanel,
+  .subjectDropdownPanel {
+    width: 100%;
+  }
+
+  .budgetDropdownFooter,
+  .scoreDropdownFooter,
+  .paidDropdownFooter,
+  .subjectDropdownFooter {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getUniversity } from '../services/api';
 import styles from './UniversityDetailPage.module.css';
@@ -196,6 +196,8 @@ const SUBJECT_OPTIONS = [
   'Китайский язык',
 ];
 
+const EDUCATION_FORM_OPTIONS = ['Очная', 'Очно-заочная', 'Заочная'];
+
 const MAX_POSSIBLE_PASING_SCORE = 410;
 
 const getFallbackUniversity = (id) => universitiesData[id] || null;
@@ -276,12 +278,26 @@ const UniversityDetailPage = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showBudgetOnly, setShowBudgetOnly] = useState(false);
+  const [minBudgetPlaces, setMinBudgetPlaces] = useState('');
+  const [maxBudgetPlaces, setMaxBudgetPlaces] = useState('');
+  const [isBudgetDropdownOpen, setIsBudgetDropdownOpen] = useState(false);
   const [minPassingScore, setMinPassingScore] = useState('');
   const [maxPassingScore, setMaxPassingScore] = useState('');
   const [isScoreDropdownOpen, setIsScoreDropdownOpen] = useState(false);
+  const [minPaidPlaces, setMinPaidPlaces] = useState('');
+  const [maxPaidPlaces, setMaxPaidPlaces] = useState('');
+  const [isPaidDropdownOpen, setIsPaidDropdownOpen] = useState(false);
+  const [selectedEducationForm, setSelectedEducationForm] = useState('');
+  const [isEducationFormDropdownOpen, setIsEducationFormDropdownOpen] = useState(false);
   const [isSubjectDropdownOpen, setIsSubjectDropdownOpen] = useState(false);
   const [subjectSearchQuery, setSubjectSearchQuery] = useState('');
   const [selectedSubjects, setSelectedSubjects] = useState([]);
+
+  const budgetDropdownRef = useRef(null);
+  const scoreDropdownRef = useRef(null);
+  const paidDropdownRef = useRef(null);
+  const educationFormDropdownRef = useRef(null);
+  const subjectDropdownRef = useRef(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
@@ -320,6 +336,60 @@ const UniversityDetailPage = () => {
   }, [maxPassingScore, minPassingScore]);
 
   const isScoreRangeValid = !scoreRangeValidationError;
+
+  const budgetPlacesValidationError = useMemo(() => {
+    const minValue = minBudgetPlaces === '' ? null : Number(minBudgetPlaces);
+    const maxValue = maxBudgetPlaces === '' ? null : Number(maxBudgetPlaces);
+
+    if (minValue !== null && (!Number.isFinite(minValue) || minValue < 0)) {
+      return 'Минимум бюджетных мест не может быть отрицательным';
+    }
+
+    if (maxValue !== null && (!Number.isFinite(maxValue) || maxValue < 0)) {
+      return 'Максимум бюджетных мест не может быть отрицательным';
+    }
+
+    if (
+      minValue !== null &&
+      maxValue !== null &&
+      Number.isFinite(minValue) &&
+      Number.isFinite(maxValue) &&
+      maxValue < minValue
+    ) {
+      return 'Максимум бюджетных мест должен быть больше или равен минимуму';
+    }
+
+    return '';
+  }, [maxBudgetPlaces, minBudgetPlaces]);
+
+  const isBudgetPlacesRangeValid = !budgetPlacesValidationError;
+
+  const paidPlacesValidationError = useMemo(() => {
+    const minValue = minPaidPlaces === '' ? null : Number(minPaidPlaces);
+    const maxValue = maxPaidPlaces === '' ? null : Number(maxPaidPlaces);
+
+    if (minValue !== null && (!Number.isFinite(minValue) || minValue < 0)) {
+      return 'Минимум платных мест не может быть отрицательным';
+    }
+
+    if (maxValue !== null && (!Number.isFinite(maxValue) || maxValue < 0)) {
+      return 'Максимум платных мест не может быть отрицательным';
+    }
+
+    if (
+      minValue !== null &&
+      maxValue !== null &&
+      Number.isFinite(minValue) &&
+      Number.isFinite(maxValue) &&
+      maxValue < minValue
+    ) {
+      return 'Максимум платных мест должен быть больше или равен минимуму';
+    }
+
+    return '';
+  }, [maxPaidPlaces, minPaidPlaces]);
+
+  const isPaidPlacesRangeValid = !paidPlacesValidationError;
 
   useEffect(() => {
     let isMounted = true;
@@ -360,8 +430,39 @@ const UniversityDetailPage = () => {
     };
   }, [id, fallbackUniversity]);
 
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (budgetDropdownRef.current && !budgetDropdownRef.current.contains(event.target)) {
+        setIsBudgetDropdownOpen(false);
+      }
+
+      if (scoreDropdownRef.current && !scoreDropdownRef.current.contains(event.target)) {
+        setIsScoreDropdownOpen(false);
+      }
+
+      if (paidDropdownRef.current && !paidDropdownRef.current.contains(event.target)) {
+        setIsPaidDropdownOpen(false);
+      }
+
+      if (educationFormDropdownRef.current && !educationFormDropdownRef.current.contains(event.target)) {
+        setIsEducationFormDropdownOpen(false);
+      }
+
+      if (subjectDropdownRef.current && !subjectDropdownRef.current.contains(event.target)) {
+        setIsSubjectDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, []);
+
   const universityPrograms = programsData[id] || [];
   const subjectOptions = useMemo(() => SUBJECT_OPTIONS, []);
+  const educationFormOptions = useMemo(() => EDUCATION_FORM_OPTIONS, []);
 
   const filteredSubjectOptions = subjectOptions.filter((subject) =>
     subject.toLowerCase().includes(subjectSearchQuery.toLowerCase())
@@ -375,11 +476,29 @@ const UniversityDetailPage = () => {
     if (showBudgetOnly && program.budgetPlaces === 0) {
       return false;
     }
+
+    if (isBudgetPlacesRangeValid && minBudgetPlaces && program.budgetPlaces < Number(minBudgetPlaces)) {
+      return false;
+    }
+    if (isBudgetPlacesRangeValid && maxBudgetPlaces && program.budgetPlaces > Number(maxBudgetPlaces)) {
+      return false;
+    }
     
     if (isScoreRangeValid && minPassingScore && program.passingScore < Number(minPassingScore)) {
       return false;
     }
     if (isScoreRangeValid && maxPassingScore && program.passingScore > Number(maxPassingScore)) {
+      return false;
+    }
+
+    if (isPaidPlacesRangeValid && minPaidPlaces && program.paidPlaces < Number(minPaidPlaces)) {
+      return false;
+    }
+    if (isPaidPlacesRangeValid && maxPaidPlaces && program.paidPlaces > Number(maxPaidPlaces)) {
+      return false;
+    }
+
+    if (selectedEducationForm && program.form !== selectedEducationForm) {
       return false;
     }
 
@@ -402,9 +521,17 @@ const UniversityDetailPage = () => {
   const handleResetFilters = () => {
     setSearchQuery('');
     setShowBudgetOnly(false);
+    setMinBudgetPlaces('');
+    setMaxBudgetPlaces('');
+    setIsBudgetDropdownOpen(false);
     setMinPassingScore('');
     setMaxPassingScore('');
     setIsScoreDropdownOpen(false);
+    setMinPaidPlaces('');
+    setMaxPaidPlaces('');
+    setIsPaidDropdownOpen(false);
+    setSelectedEducationForm('');
+    setIsEducationFormDropdownOpen(false);
     setIsSubjectDropdownOpen(false);
     setSubjectSearchQuery('');
     setSelectedSubjects([]);
@@ -555,7 +682,78 @@ const UniversityDetailPage = () => {
                 <span>Только бюджетные места</span>
               </label>
 
-              <div className={styles.scoreDropdown}>
+              <div className={styles.budgetDropdown} ref={budgetDropdownRef}>
+                <button
+                  type="button"
+                  className={styles.budgetDropdownTrigger}
+                  onClick={() => setIsBudgetDropdownOpen((currentState) => !currentState)}
+                >
+                  <span>
+                    {minBudgetPlaces || maxBudgetPlaces
+                      ? `Бюджетные места: от ${minBudgetPlaces || '0'} до ${maxBudgetPlaces || '∞'}`
+                      : 'Бюджетные места: любое количество'}
+                  </span>
+                  <span className={styles.budgetDropdownChevron}>
+                    {isBudgetDropdownOpen ? '▲' : '▼'}
+                  </span>
+                </button>
+
+                {isBudgetDropdownOpen && (
+                  <div className={styles.budgetDropdownPanel}>
+                    <div className={styles.budgetRange}>
+                      <input
+                        type="number"
+                        className={styles.budgetInput}
+                        placeholder="от"
+                        value={minBudgetPlaces}
+                        min="0"
+                        step="1"
+                        onChange={(e) => {
+                          setMinBudgetPlaces(e.target.value);
+                          setCurrentPage(1);
+                        }}
+                      />
+                      <span className={styles.budgetRangeSeparator}>—</span>
+                      <input
+                        type="number"
+                        className={styles.budgetInput}
+                        placeholder="до"
+                        value={maxBudgetPlaces}
+                        min="0"
+                        step="1"
+                        onChange={(e) => {
+                          setMaxBudgetPlaces(e.target.value);
+                          setCurrentPage(1);
+                        }}
+                      />
+                    </div>
+
+                    {budgetPlacesValidationError && (
+                      <div className={styles.budgetDropdownError}>
+                        {budgetPlacesValidationError}
+                      </div>
+                    )}
+
+                    <div className={styles.budgetDropdownFooter}>
+                      <span>
+                        {minBudgetPlaces || maxBudgetPlaces
+                          ? `От ${minBudgetPlaces || '0'} до ${maxBudgetPlaces || '∞'}`
+                          : 'Укажите диапазон бюджетных мест'}
+                      </span>
+                      <button
+                        type="button"
+                        className={styles.budgetDropdownClose}
+                        disabled={!isBudgetPlacesRangeValid}
+                        onClick={() => setIsBudgetDropdownOpen(false)}
+                      >
+                        Готово
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className={styles.scoreDropdown} ref={scoreDropdownRef}>
                 <button
                   type="button"
                   className={styles.scoreDropdownTrigger}
@@ -563,7 +761,7 @@ const UniversityDetailPage = () => {
                 >
                   <span>
                     {minPassingScore || maxPassingScore
-                      ? `Проходной балл: ${minPassingScore || '0'}-${maxPassingScore || '∞'}`
+                      ? `Проходной балл: от ${minPassingScore || '0'} до ${maxPassingScore || '∞'}`
                       : 'Проходной балл: любой'}
                   </span>
                   <span className={styles.scoreDropdownChevron}>
@@ -577,7 +775,7 @@ const UniversityDetailPage = () => {
                       <input
                         type="number"
                         className={styles.scoreInput}
-                        placeholder="Проходной балл от"
+                        placeholder="от"
                         value={minPassingScore}
                         min="0"
                         max={MAX_POSSIBLE_PASING_SCORE}
@@ -612,7 +810,7 @@ const UniversityDetailPage = () => {
                     <div className={styles.scoreDropdownFooter}>
                       <span>
                         {minPassingScore || maxPassingScore
-                          ? `Диапазон: ${minPassingScore || '0'}-${maxPassingScore || '∞'}`
+                          ? `От ${minPassingScore || '0'} до ${maxPassingScore || '∞'}`
                           : 'Укажите диапазон проходного балла'}
                       </span>
                       <button
@@ -628,7 +826,126 @@ const UniversityDetailPage = () => {
                 )}
               </div>
 
-              <div className={styles.subjectDropdown}>
+              <div className={styles.paidDropdown} ref={paidDropdownRef}>
+                <button
+                  type="button"
+                  className={styles.paidDropdownTrigger}
+                  onClick={() => setIsPaidDropdownOpen((currentState) => !currentState)}
+                >
+                  <span>
+                    {minPaidPlaces || maxPaidPlaces
+                      ? `Платные места: ${minPaidPlaces || '0'}-${maxPaidPlaces || '∞'}`
+                      : 'Платные места: любое количество'}
+                  </span>
+                  <span className={styles.paidDropdownChevron}>
+                    {isPaidDropdownOpen ? '▲' : '▼'}
+                  </span>
+                </button>
+
+                {isPaidDropdownOpen && (
+                  <div className={styles.paidDropdownPanel}>
+                    <div className={styles.paidRange}>
+                      <input
+                        type="number"
+                        className={styles.paidInput}
+                        placeholder="от"
+                        value={minPaidPlaces}
+                        min="0"
+                        step="1"
+                        onChange={(e) => {
+                          setMinPaidPlaces(e.target.value);
+                          setCurrentPage(1);
+                        }}
+                      />
+                      <span className={styles.paidRangeSeparator}>—</span>
+                      <input
+                        type="number"
+                        className={styles.paidInput}
+                        placeholder="до"
+                        value={maxPaidPlaces}
+                        min="0"
+                        step="1"
+                        onChange={(e) => {
+                          setMaxPaidPlaces(e.target.value);
+                          setCurrentPage(1);
+                        }}
+                      />
+                    </div>
+
+                    {paidPlacesValidationError && (
+                      <div className={styles.paidDropdownError}>
+                        {paidPlacesValidationError}
+                      </div>
+                    )}
+
+                    <div className={styles.paidDropdownFooter}>
+                      <span>
+                        {minPaidPlaces || maxPaidPlaces
+                          ? `Диапазон: ${minPaidPlaces || '0'}-${maxPaidPlaces || '∞'}`
+                          : 'Укажите диапазон платных мест'}
+                      </span>
+                      <button
+                        type="button"
+                        className={styles.paidDropdownClose}
+                        disabled={!isPaidPlacesRangeValid}
+                        onClick={() => setIsPaidDropdownOpen(false)}
+                      >
+                        Готово
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className={styles.educationFormDropdown} ref={educationFormDropdownRef}>
+                <button
+                  type="button"
+                  className={styles.educationFormDropdownTrigger}
+                  onClick={() => setIsEducationFormDropdownOpen((currentState) => !currentState)}
+                >
+                  <span>
+                    {selectedEducationForm
+                      ? `Форма обучения: ${selectedEducationForm}`
+                      : 'Форма обучения: любая'}
+                  </span>
+                  <span className={styles.educationFormDropdownChevron}>
+                    {isEducationFormDropdownOpen ? '▲' : '▼'}
+                  </span>
+                </button>
+
+                {isEducationFormDropdownOpen && (
+                  <div className={styles.educationFormDropdownPanel}>
+                    <button
+                      type="button"
+                      className={`${styles.educationFormOption} ${selectedEducationForm === '' ? styles.educationFormOptionActive : ''}`}
+                      onClick={() => {
+                        setSelectedEducationForm('');
+                        setCurrentPage(1);
+                        setIsEducationFormDropdownOpen(false);
+                      }}
+                    >
+                      Любая форма
+                    </button>
+
+                    {educationFormOptions.map((form) => (
+                      <button
+                        key={form}
+                        type="button"
+                        className={`${styles.educationFormOption} ${selectedEducationForm === form ? styles.educationFormOptionActive : ''}`}
+                        onClick={() => {
+                          setSelectedEducationForm(form);
+                          setCurrentPage(1);
+                          setIsEducationFormDropdownOpen(false);
+                        }}
+                      >
+                        {form}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className={styles.subjectDropdown} ref={subjectDropdownRef}>
                 <button
                   type="button"
                   className={styles.subjectDropdownTrigger}
