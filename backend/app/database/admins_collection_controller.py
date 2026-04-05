@@ -57,6 +57,17 @@ class AdminsCollectionController:
         adminInDB = self.__collection.find_one(adminFilter)
         return adminInDB
 
+    def find_admin_by_username(self, username: str) -> dict | None:
+        """Возвращает админа по username или None, если он не найден."""
+        if not self.__check_collection:
+            return None
+
+        adminFilter = {
+            "username": username,
+        }
+        adminInDB = self.__collection.find_one(adminFilter)
+        return adminInDB
+
     def find_admin_by_id(self, idUser: str) -> dict | None:
         """Возвращает все поля найденного админа в виде словаря. Передавать id в виде str.
         Или None, если не удалось найти.
