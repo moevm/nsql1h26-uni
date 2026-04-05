@@ -22,8 +22,10 @@
 ### Production-like режим
 
 ```bash
-docker compose up --build
+docker compose --profile prod up --build
 ```
+
+Перед запуском можно скопировать [`.env.example`](.env.example) в `.env` и при необходимости поменять seed-логин/пароль.
 
 - Frontend: `http://localhost:3000`
 - Backend (FastAPI): `http://localhost:8080`
@@ -31,7 +33,7 @@ docker compose up --build
 ### Dev режим  с hot-reload
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+docker compose --profile dev up --build
 ```
 
 Изменения в коде применяются автоматически без пересборки образа.

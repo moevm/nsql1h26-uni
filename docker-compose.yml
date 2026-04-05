@@ -18,15 +18,19 @@ services:
       - db
     environment:
       - DATABASE_TYPE=mongodb
-      - DATABASE_HOST=mongodb
+      - DATABASE_HOST=db
       - DATABASE_PORT=27017
       - DATABASE_NAME=university_db
+      - SEED_ADMIN_USERNAME=${SEED_ADMIN_USERNAME}
+      - SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD}
     networks:
       - app-network
     command: sh -c "sleep 5 && python init_collections.py"
     restart: "no"
 
   fastapi-app:
+    profiles:
+      - prod
     build:
       context: ./backend
     container_name: fastapi_app
@@ -38,14 +42,39 @@ services:
       - "8080:8000"
     environment:
       - DATABASE_TYPE=mongodb
-      - DATABASE_HOST=mongodb
+      - DATABASE_HOST=db
       - DATABASE_PORT=27017
       - DATABASE_NAME=university_db
     networks:
       - app-network
     command: sh -c "sleep 5 && uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
+  fastapi-app-dev:
+    profiles:
+      - dev
+    build:
+      context: ./backend
+    container_name: fastapi_app_dev
+    restart: unless-stopped
+    depends_on:
+      - db
+      - db-init
+    ports:
+      - "8080:8000"
+    environment:
+      - DATABASE_TYPE=mongodb
+      - DATABASE_HOST=db
+      - DATABASE_PORT=27017
+      - DATABASE_NAME=university_db
+    volumes:
+      - ./backend/app:/app/app
+    networks:
+      - app-network
+    command: sh -c "sleep 5 && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
   frontend:
+    profiles:
+      - prod
     build:
       context: ./frontend
       target: prod
@@ -57,6 +86,30 @@ services:
       - "3000:80"
     networks:
       - app-network
+
+  frontend-dev:
+    profiles:
+      - dev
+    build:
+      context: ./frontend
+      target: dev
+    container_name: frontend_app_dev
+    restart: unless-stopped
+    depends_on:
+      - fastapi-app-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=3000
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - app-network
+    command: npm run dev
 
 volumes:
   mongodb_data:

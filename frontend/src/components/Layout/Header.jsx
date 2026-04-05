@@ -1,9 +1,17 @@
 import React from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { clearAdminSession, getAdminSession, isAdminAuthenticated } from '../../services/auth';
 import styles from './Header.module.css';
 
 const Header = () => {
-  const isAdmin = false; // Заглушка авторизации
+  const navigate = useNavigate();
+  const adminSession = getAdminSession();
+  const isAdmin = isAdminAuthenticated();
+
+  const handleLogout = () => {
+    clearAdminSession();
+    navigate('/', { replace: true });
+  };
 
   return (
     <header className={styles.header}>
@@ -49,9 +57,15 @@ const Header = () => {
         </nav>
         
         {isAdmin && (
-          <Link to="/admin" className={styles.adminLink}>
-            Админ-панель
-          </Link>
+          <div className={styles.adminActions}>
+            <span className={styles.adminName}>{adminSession?.username || 'Администратор'}</span>
+            <Link to="/admin" className={styles.adminLink}>
+              Админ-панель
+            </Link>
+            <button type="button" className={styles.logoutButton} onClick={handleLogout}>
+              Выйти
+            </button>
+          </div>
         )}
       </div>
     </header>

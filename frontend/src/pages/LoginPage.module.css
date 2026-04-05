@@ -43,6 +43,13 @@
   padding: 30px;
 }
 
+.helperText {
+  margin-bottom: 18px;
+  color: #4a5b6e;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
 .formGroup {
   margin-bottom: 20px;
 }

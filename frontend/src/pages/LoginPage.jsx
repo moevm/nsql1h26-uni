@@ -1,35 +1,47 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { loginAdmin } from '../services/api';
+import { saveAdminSession } from '../services/auth';
 import styles from './LoginPage.module.css';
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const canSubmit = email.trim() !== '' && password.trim() !== '';
+  const location = useLocation();
+  const canSubmit = username.trim() !== '' && password.trim() !== '';
+  const fromPath = location.state?.from?.pathname || '/admin';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     if (!canSubmit) {
-      setError('Заполните email и пароль');
+      setError('Заполните логин и пароль');
       return;
     }
 
     setLoading(true);
 
-    // Заглушка авторизации
-    if (email === 'admin@example.com' && password === 'admin123') {
-      localStorage.setItem('isAdmin', 'true');
-      localStorage.setItem('email', email);
-      navigate('/admin');
-    } else {
-      setError('Неверный email или пароль');
+    try {
+      const response = await loginAdmin({
+        username: username.trim(),
+        password,
+      });
+
+      saveAdminSession({
+        adminId: response.admin_id,
+        username: response.username,
+      });
+
+      navigate(fromPath, { replace: true });
+    } catch (requestError) {
+      setError(requestError.message || 'Неверный логин или пароль');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -42,14 +54,14 @@ const LoginPage = () => {
           <div className={styles.formContainer}>
             <form onSubmit={handleSubmit}>
               <div className={styles.formGroup}>
-                <label htmlFor="email" className={styles.formLabel}>Email</label>
+                <label htmlFor="username" className={styles.formLabel}>Логин</label>
                 <input
-                  id="email"
-                  type="email"
+                  id="username"
+                  type="text"
                   className={styles.formInput}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="user@example.com"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="admin"
                   required
                   autoComplete="username"
                   aria-invalid={Boolean(error)}

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.database.universities_db import UniversitiesDataBase
 from app.core.dependencies import get_db_connection
 from app.models import AdminCreate, AdminLogin
-from utils import *
+from .utils import get_hash_by_username_password
 
 router = APIRouter(prefix="/admins", tags=["admins"])
 
