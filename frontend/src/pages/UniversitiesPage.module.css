@@ -286,8 +286,10 @@
 
 .progressFill {
   height: 4px;
-  background: #1e3c5c;
+  background: linear-gradient(90deg, #1e3c5c, #2e5a8c);
   border-radius: 4px;
+  width: 0%;
+  transition: width 0.3s ease-out;
 }
 
 .loadingStatus {

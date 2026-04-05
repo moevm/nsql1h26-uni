@@ -26,4 +26,12 @@ export async function loginAdmin(payload) {
   });
 }
 
+export async function getUniversities() {
+  return request('/universities');
+}
+
+export async function getUniversity(id) {
+  return request(`/universities/${id}`);
+}
+
 export { API_BASE_URL };

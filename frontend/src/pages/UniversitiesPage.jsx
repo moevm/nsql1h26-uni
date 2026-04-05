@@ -1,66 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './UniversitiesPage.module.css';
-
-const mockUniversities = [
-  {
-    id: '1',
-    name: 'МГУ им. Ломоносова',
-    city: 'Москва',
-    rating: 4.9,
-    hasDormitory: true,
-    militaryDept: true,
-    programsCount: 128
-  },
-  {
-    id: '2',
-    name: 'МФТИ (Физтех)',
-    city: 'Долгопрудный',
-    rating: 4.8,
-    hasDormitory: true,
-    militaryDept: true,
-    programsCount: 85
-  },
-  {
-    id: '3',
-    name: 'НИУ ВШЭ',
-    city: 'Москва',
-    rating: 4.7,
-    hasDormitory: true,
-    militaryDept: false,
-    programsCount: 156
-  },
-  {
-    id: '4',
-    name: 'МГТУ им. Баумана',
-    city: 'Москва',
-    rating: 4.6,
-    hasDormitory: true,
-    militaryDept: true,
-    programsCount: 112
-  },
-  {
-    id: '5',
-    name: 'СПбГУ',
-    city: 'Санкт-Петербург',
-    rating: 4.7,
-    hasDormitory: true,
-    militaryDept: false,
-    programsCount: 98
-  },
-  {
-    id: '6',
-    name: 'НГУ',
-    city: 'Новосибирск',
-    rating: 4.5,
-    hasDormitory: true,
-    militaryDept: false,
-    programsCount: 67
-  }
-];
+import { getUniversities } from '../services/api';
 
 const UniversitiesPage = () => {
   const navigate = useNavigate();
+  
+  const [universities, setUniversities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
@@ -68,14 +16,41 @@ const UniversitiesPage = () => {
   const [militaryDept, setMilitaryDept] = useState('');
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
   const [sortBy, setSortBy] = useState('rating_desc');
+
+  useEffect(() => {
+    const fetchUniversities = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getUniversities();
+        const transformedData = data.map(uni => ({
+          id: uni._id,
+          name: uni.name,
+          city: uni.city,
+          rating: uni.rating || 0,
+          hasDormitory: uni.has_dormitory || false,
+          militaryDept: uni.military_dept || false,
+          programsCount: uni.programs_count || 0
+        }));
+        setUniversities(transformedData);
+      } catch (err) {
+        setError(err.message || 'Ошибка при загрузке данных');
+        console.error('Ошибка загрузки университетов:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUniversities();
+  }, []);
   
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   
-  const cities = [...new Set(mockUniversities.map((uni) => uni.city))];
+  const cities = [...new Set(universities.map((uni) => uni.city))];
   const cityOptions = cities.filter((city) => city.toLowerCase().includes(selectedCity.toLowerCase()));
   
-  const filteredUniversities = mockUniversities.filter(uni => {
+  const filteredUniversities = universities.filter(uni => {
     if (searchQuery && !uni.name.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
@@ -138,6 +113,26 @@ const UniversitiesPage = () => {
       <div className={styles.container}>
         <div className={styles.screenTitle}>🔍 Поиск вузов</div>
         
+        {loading && (
+          <div className={styles.message} style={{ textAlign: 'center', padding: '40px' }}>
+            ⏳ Загрузка данных...
+          </div>
+        )}
+        
+        {error && (
+          <div className={styles.message} style={{ textAlign: 'center', padding: '40px', color: '#d32f2f' }}>
+            ❌ Ошибка: {error}
+          </div>
+        )}
+        
+        {!loading && !error && universities.length === 0 && (
+          <div className={styles.message} style={{ textAlign: 'center', padding: '40px' }}>
+            📭 Университетов не найдено
+          </div>
+        )}
+        
+        {!loading && !error && universities.length > 0 && (
+          <>
         <div className={styles.searchCard}>
           <div className={styles.searchRow}>
             <input
@@ -305,11 +300,8 @@ const UniversitiesPage = () => {
             </div>
           </div>
         )}
-        
-        <div className={styles.progressLine}>
-          <div className={styles.progressFill} style={{ width: '60%' }}></div>
-        </div>
-        <div className={styles.loadingStatus}>загрузка данных...</div>
+          </>
+        )}
       </div>
     </div>
   );
