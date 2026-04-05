@@ -45,6 +45,11 @@ def seed_default_universities(db):
             "has_dormitory": True,
             "military_dept": True,
             "website": "https://www.msu.ru",
+            "foundation_year": 1755,
+            "students_count": 40_000,
+            "faculties_count": 15,
+            "phone": "+7 (495) 939-10-00",
+            "email": "priem@msu.ru",
             "rating": 4.9,
             "programs_count": 128
         },
@@ -54,6 +59,11 @@ def seed_default_universities(db):
             "has_dormitory": True,
             "military_dept": True,
             "website": "https://www.mipt.ru",
+            "foundation_year": 1234,
+            "students_count": 30_000,
+            "faculties_count": 15,
+            "phone": "+7 (495) 100-20-30",
+            "email": "priem@mfti.ru",
             "rating": 4.8,
             "programs_count": 85
         },
@@ -63,6 +73,11 @@ def seed_default_universities(db):
             "has_dormitory": True,
             "military_dept": False,
             "website": "https://www.hse.ru",
+            "foundation_year": 1534,
+            "students_count": 35_000,
+            "faculties_count": 11,
+            "phone": "+7 (495) 111-11-11",
+            "email": "priem@vshe.ru",
             "rating": 4.7,
             "programs_count": 156
         },
@@ -72,6 +87,11 @@ def seed_default_universities(db):
             "has_dormitory": True,
             "military_dept": True,
             "website": "https://www.bmstu.ru",
+            "foundation_year": 1234,
+            "students_count": 30_000,
+            "faculties_count": 15,
+            "phone": "+7 (495) 100-20-30",
+            "email": "priem@msu.ru",
             "rating": 4.6,
             "programs_count": 112
         },
@@ -81,6 +101,11 @@ def seed_default_universities(db):
             "has_dormitory": True,
             "military_dept": False,
             "website": "https://spbu.ru",
+            "foundation_year": 1678,
+            "students_count": 20_000,
+            "faculties_count": 22,
+            "phone": "+7 (812) 222-22-22",
+            "email": "priem@spbgu.ru",
             "rating": 4.7,
             "programs_count": 98
         },
@@ -90,6 +115,11 @@ def seed_default_universities(db):
             "has_dormitory": True,
             "military_dept": False,
             "website": "https://www.nsu.ru",
+            "foundation_year": 999,
+            "students_count": 10_000,
+            "faculties_count": 9,
+            "phone": "+7 (495) 500-20-30",
+            "email": "priem@ngu.ru",
             "rating": 4.5,
             "programs_count": 67
         }
@@ -107,6 +137,11 @@ def seed_default_universities(db):
             has_dormitory=uni["has_dormitory"],
             military_dept=uni["military_dept"],
             website=uni["website"],
+            foundation_year=uni["foundation_year"],
+            students_count=uni["students_count"],
+            faculties_count=uni["faculties_count"],
+            phone=uni["phone"],
+            email=uni["email"],
             rating=uni["rating"],
             programs_count=uni["programs_count"]
         )
