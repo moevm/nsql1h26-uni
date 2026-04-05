@@ -8,6 +8,8 @@ class UniversityCreate(BaseModel):
     military_dept: bool
     website: str
     comment: Optional[str] = None
+    rating: Optional[float] = None
+    programs_count: Optional[int] = None
 
 class UniversityUpdate(BaseModel):
     name: Optional[str] = None
@@ -16,3 +18,5 @@ class UniversityUpdate(BaseModel):
     military_dept: Optional[bool] = None
     website: Optional[str] = None
     comment: Optional[str] = None
+    rating: Optional[float] = None
+    programs_count: Optional[int] = None
