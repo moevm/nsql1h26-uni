@@ -1,0 +1,276 @@
+.container {
+  margin: 0 auto;
+  max-width: 1200px;
+}
+
+.screenTitle {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #0b253b;
+  margin-bottom: 20px;
+}
+
+.importExportCard {
+  background: #f2f6fa;
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 30px;
+}
+
+.sectionSubtitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e3c5c;
+  margin-bottom: 20px;
+}
+
+.importExportGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .importExportGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.importBox,
+.exportBox {
+  background: white;
+  border: 1px solid #e2eaf2;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.boxTitle {
+  font-weight: 600;
+  color: #0b253b;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+.formatSelect {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d0dbe8;
+  border-radius: 60px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.fileInput {
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 12px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.warning {
+  color: #991b1b;
+  background: #fee2e2;
+  padding: 8px 12px;
+  border-radius: 40px;
+  font-size: 0.85rem;
+  margin: 12px 0;
+  text-align: center;
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 60px;
+  border: 1px solid #cbd5e1;
+  font-weight: 600;
+  font-size: 0.9rem;
+  background: white;
+  color: #1e3c5c;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s;
+}
+
+.btn:hover {
+  background: #f8fafc;
+}
+
+.btnPrimary {
+  background: #1e3c5c;
+  border: 1px solid #1e3c5c;
+  color: white;
+}
+
+.btnPrimary:hover {
+  background: #162d48;
+}
+
+.btnDanger {
+  background: #991b1b;
+  border: 1px solid #991b1b;
+  color: white;
+}
+
+.btnDanger:hover {
+  background: #7a0e0e;
+}
+
+.managementSection {
+  background: #f2f6fa;
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 30px;
+}
+
+.managementHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.managementHeader h3 {
+  font-size: 1.1rem;
+  color: #0b253b;
+  margin: 0;
+  font-weight: 600;
+}
+
+.addBtn {
+  padding: 8px 18px;
+  background: #1e3c5c;
+  color: white;
+  border-radius: 40px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: none;
+}
+
+.addBtn:hover {
+  background: #162d48;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid #d0dbe8;
+  border-radius: 60px;
+  margin-bottom: 16px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: white;
+}
+
+.searchInput:focus {
+  outline: 2px solid #a3c0e0;
+}
+
+.searchInput:disabled {
+  background: #eef2f6;
+  color: #a0aec0;
+}
+
+.tableHeader {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1.2fr 1fr 1fr 0.6fr;
+  padding: 12px 16px;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  background: white;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 2px solid #e2eaf2;
+}
+
+.uniRow {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1.2fr 1fr 1fr 0.6fr;
+  align-items: center;
+  padding: 12px 16px;
+  background: white;
+  border-bottom: 1px solid #e2eaf2;
+  font-size: 0.9rem;
+}
+
+.uniRow:last-child {
+  border-bottom: none;
+  border-radius: 0 0 8px 8px;
+}
+
+.actionBtns {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.actionBtn {
+  padding: 4px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 32px;
+  text-align: center;
+}
+
+.actionBtn:hover {
+  background: #f8fafc;
+  border-color: #1e3c5c;
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+  padding-top: 16px;
+  border-top: 1px solid #e2eaf2;
+}
+
+.pageNumbers {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.pageBtn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #d0dbe8;
+  background: white;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pageBtn:hover:not(:disabled) {
+  border-color: #1e3c5c;
+  background: #f8fafc;
+}
+
+.pageBtn.active {
+  background: #1e3c5c;
+  color: white;
+  border-color: #1e3c5c;
+}
+
+.pageBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dots {
+  color: #cbd5e1;
+}

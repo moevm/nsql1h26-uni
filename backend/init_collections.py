@@ -31,6 +31,97 @@ def seed_default_admin(db):
     else:
         print(f"Failed to create seed admin '{seed_username}'")
 
+
+def seed_default_universities(db):
+    universities_controller = db.get_universities_collection()
+    if not universities_controller:
+        print("No universities collection available for seeding")
+        return
+
+    default_universities = [
+        {
+            "name": "МГУ им. Ломоносова",
+            "city": "Москва",
+            "has_dormitory": True,
+            "military_dept": True,
+            "website": "https://www.msu.ru",
+            "rating": 4.9,
+            "programs_count": 128
+        },
+        {
+            "name": "МФТИ (Физтех)",
+            "city": "Долгопрудный",
+            "has_dormitory": True,
+            "military_dept": True,
+            "website": "https://www.mipt.ru",
+            "rating": 4.8,
+            "programs_count": 85
+        },
+        {
+            "name": "НИУ ВШЭ",
+            "city": "Москва",
+            "has_dormitory": True,
+            "military_dept": False,
+            "website": "https://www.hse.ru",
+            "rating": 4.7,
+            "programs_count": 156
+        },
+        {
+            "name": "МГТУ им. Баумана",
+            "city": "Москва",
+            "has_dormitory": True,
+            "military_dept": True,
+            "website": "https://www.bmstu.ru",
+            "rating": 4.6,
+            "programs_count": 112
+        },
+        {
+            "name": "СПбГУ",
+            "city": "Санкт-Петербург",
+            "has_dormitory": True,
+            "military_dept": False,
+            "website": "https://spbu.ru",
+            "rating": 4.7,
+            "programs_count": 98
+        },
+        {
+            "name": "НГУ",
+            "city": "Новосибирск",
+            "has_dormitory": True,
+            "military_dept": False,
+            "website": "https://www.nsu.ru",
+            "rating": 4.5,
+            "programs_count": 67
+        }
+    ]
+
+    count = 0
+    for uni in default_universities:
+        if universities_controller.find_university_by_name(uni["name"]):
+            print(f"University '{uni['name']}' already exists, skipping")
+            continue
+
+        result = universities_controller.add_university(
+            name=uni["name"],
+            city=uni["city"],
+            has_dormitory=uni["has_dormitory"],
+            military_dept=uni["military_dept"],
+            website=uni["website"],
+            rating=uni["rating"],
+            programs_count=uni["programs_count"]
+        )
+
+        if result:
+            print(f"University '{uni['name']}' created with ID: {result}")
+            count += 1
+        else:
+            print(f"Failed to create university '{uni['name']}'")
+
+    if count > 0:
+        print(f"Total {count} universities seeded")
+    else:
+        print("No new universities were added")
+
 if __name__ == "__main__":
     db = get_db()
     db.connect_to_db()
@@ -38,4 +129,5 @@ if __name__ == "__main__":
                           validation_programs_schema=validation_programs_schema,
                           validation_universities_schema=validation_universities_schema)
     seed_default_admin(db)
+    seed_default_universities(db)
     db.close_db()

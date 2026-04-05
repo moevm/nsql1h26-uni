@@ -25,7 +25,7 @@ class UniversitiesCollectionController:
             return False
 
     def add_university(self, name: str, city: str, has_dormitory: bool, military_dept: bool,
-                       website: str, comment: str = None) -> str | None:
+                       website: str, comment: str = None, rating: float = None, programs_count: int = None) -> str | None:
         """Вернет id университета в случае успешного добавление. Иначе - None."""
         if not self.__check_collection():
             return None
@@ -37,6 +37,8 @@ class UniversitiesCollectionController:
                 "military_dept": military_dept,
                 "website": website,
                 "comment": comment if comment else "",
+                "rating": rating if rating is not None else 4.5,
+                "programs_count": programs_count if programs_count is not None else 0,
                 "createdAt": datetime.datetime.now(datetime.timezone.utc),
                 "updatedAt": datetime.datetime.now(datetime.timezone.utc)
             }
