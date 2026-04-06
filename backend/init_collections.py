@@ -157,6 +157,95 @@ def seed_default_universities(db):
     else:
         print("No new universities were added")
 
+def seed_default_programs(db):
+    programs_controller = db.get_programs_collection()
+    universities_controller = db.get_universities_collection()
+    if not programs_controller:
+        print("No programs collection available for seeding")
+        return
+
+    default_programs = [
+        {
+            "university_id": str(universities_controller.find_university_by_name("мфти (физтех)")["_id"]),
+            "code": "01.03.02",
+            "name": "Прикладная математика и информатика",
+            "budget_places": 25,
+            "paid_places": 15,
+            "passing_score": 290,
+            "form_of_education": "Очно",
+            "required_subjects": {
+                "Математика": 70,
+                "Информатика": 75,
+                "Русский язык": 80
+            }
+        },
+        {
+            "university_id": str(universities_controller.find_university_by_name("СПбГУ")["_id"]),
+            "code": "01.03.02",
+            "name": "Прикладная математика и информатика",
+            "budget_places": 5,
+            "paid_places": 65,
+            "passing_score": 270,
+            "form_of_education": "Очно",
+            "required_subjects": {
+                "Математика": 60,
+                "Информатика": 65,
+                "Русский язык": 70
+            }
+        },
+        {
+            "university_id": str(universities_controller.find_university_by_name("МФТИ (физтех)")["_id"]),
+            "code": "09.03.04",
+            "name": "Программная инженерия",
+            "budget_places": 15,
+            "paid_places": 35,
+            "passing_score": 288,
+            "form_of_education": "Очно",
+            "required_subjects": {
+                "Математика": 70,
+                "Информатика": 65,
+                "Русский язык": 60
+            }
+        },
+        {
+            "university_id": str(universities_controller.find_university_by_name("спбгу")["_id"]),
+            "code": "03.03.04",
+            "name": "Автоматизация тестирования",
+            "budget_places": 16,
+            "paid_places": 77,
+            "passing_score": 110,
+            "form_of_education": "Очно",
+            "required_subjects": {
+                "Математика": 75,
+                "Обществознание": 55
+            }
+        },
+    ]
+
+    count = 0
+    for prog in default_programs:
+        result = programs_controller.add_program(
+            university_id=prog["university_id"],
+            code=prog["code"],
+            name=prog["name"],
+            budget_places=prog["budget_places"],
+            paid_places=prog["paid_places"],
+            passing_score=prog["passing_score"],
+            form_of_education=prog["form_of_education"],
+            required_subjects=prog["required_subjects"]
+        )
+
+        if result:
+            print(f"Program '{prog['name']}' created with ID: {result}")
+            count += 1
+        else:
+            print(f"Failed to create program '{prog['name']}'")
+
+    if count > 0:
+        print(f"Total {count} programs seeded")
+    else:
+        print("No new programs were added")
+
 if __name__ == "__main__":
     db = get_db()
     db.connect_to_db()
@@ -165,4 +254,5 @@ if __name__ == "__main__":
                           validation_universities_schema=validation_universities_schema)
     seed_default_admin(db)
     seed_default_universities(db)
+    seed_default_programs(db)
     db.close_db()

@@ -96,7 +96,7 @@ validation_programs_schema = {
     "$jsonSchema": {
         "bsonType": "object",
         "required": ["university_id", "code", "name", "budget_places", "paid_places", "passing_score",
-                     "form_of_education", "required_subjects", "createdAt", "updatedAt"],
+                     "form_of_education", "required_subjects", "comment", "createdAt", "updatedAt"],
         "properties": {
             "_id": {
                 "bsonType": "objectId"

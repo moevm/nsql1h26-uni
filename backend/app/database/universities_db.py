@@ -73,12 +73,13 @@ class UniversitiesDataBase:
 
         if self.find_collection("admins"):
             self.__adminsCollectionController = AdminsCollectionController(self.__db["admins"])
-            self.__adminsCollectionController.create_index("username")
+            self.__adminsCollectionController.create_index([("username", 1)])
         if self.find_collection("universities"):
             self.__universitiesCollectionController = UniversitiesCollectionController(self.__db["universities"])
-            self.__universitiesCollectionController.create_index("name")
+            self.__universitiesCollectionController.create_index([("name", 1)])
         if self.find_collection("programs"):
             self.__programsCollectionController = ProgramsCollectionController(self.__db["programs"])
+            self.__programsCollectionController.create_index([("code", 1), ("university_id", 1)])
 
     def close_db(self):
         if self.__client:
