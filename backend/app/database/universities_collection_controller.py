@@ -4,8 +4,9 @@ import datetime
 import re
 from app.database.base_collection_controller import BaseCollectionController
 
+
 class UniversitiesCollectionController(BaseCollectionController):
-    def __init__(self, collection : Collection):
+    def __init__(self, collection: Collection):
         super().__init__(collection)
 
     def add_university(self, name: str, city: str, has_dormitory: bool, military_dept: bool,
@@ -75,34 +76,27 @@ class UniversitiesCollectionController(BaseCollectionController):
         universityInDB = self._collection.find_one(universityFilter)
         return universityInDB
 
-    def find_universities_by_prefix(self, name: str) -> list:
-        """Возвращает список всех найденных университетов по префиксу. Элементы списка - словари со всеми полями.
-        Name не зависит от регистра."""
-        if not self._check_collection():
-            return []
-        universityFilter = {
-            "name": {
-                "$regex": f"^{name}",
-                "$options": "i"
-            }
-        }
-        universitiesInDB = self._collection.find(universityFilter)
-        result = [university for university in universitiesInDB]
-        return result
-
-    def find_universities_by_filters(self, city: str = None, has_dormitory: bool = None, military_dept: bool = None,
+    def find_universities_by_filters(self, name: str = None, city: str = None, has_dormitory: bool = None,
+                                     military_dept: bool = None,
                                      website: str = None, foundation_year: int = None, students_count: int = None,
                                      faculties_count: int = None,
-                                     phone: str = None, email: str = None, rating: float = None,
-                                     programs_count: int = None, comment: str = None) -> list:
+                                     phone: str = None, email: str = None, rating: tuple[float | None, ...] = None,
+                                     programs_count: tuple[float | None, ...] = None, comment: str = None) -> list:
         """Возвращает список всех найденных университетов. Элементы списка - словари со всеми полями.
         city, website, email не зависят от регистра."""
         if not self._check_collection():
             return []
         universityFilter = {}
+        if name:
+            universityFilter["name"] = {
+                "name": {
+                    "$regex": f"{name}",
+                    "$options": "i"
+                }
+            }
         if city:
             universityFilter["city"] = {
-                "$regex": f"^{city}$",
+                "$regex": f"{city}",
                 "$options": "i"
             }
         if has_dormitory is not None:
@@ -111,7 +105,7 @@ class UniversitiesCollectionController(BaseCollectionController):
             universityFilter["military_dept"] = military_dept
         if website:
             universityFilter["website"] = {
-                "$regex": f"^{website}$",
+                "$regex": f"{website}",
                 "$options": "i"
             }
         if foundation_year is not None:
@@ -124,15 +118,26 @@ class UniversitiesCollectionController(BaseCollectionController):
             universityFilter["phone"] = phone
         if email is not None:
             universityFilter["email"] = {
-                "$regex": f"^{email}$",
+                "$regex": f"{email}",
                 "$options": "i"
             }
         if rating is not None:
-            universityFilter["rating"] = rating
+            universityFilter["rating"] = {}
+            if rating[0] is not None:
+                universityFilter["rating"]["$gte"] = rating[0]
+            if rating[1] is not None:
+                universityFilter["rating"]["$lte"] = rating[1]
         if programs_count is not None:
-            universityFilter["programs_count"] = programs_count
+            universityFilter["programs_count"] = {}
+            if programs_count[0] is not None:
+                universityFilter["programs_count"]["$gte"] = programs_count[0]
+            if programs_count[1] is not None:
+                universityFilter["programs_count"]["$lte"] = programs_count[1]
         if comment is not None:
-            universityFilter["comment"] = comment
+            universityFilter["comment"] = {
+                "$regex": f"{comment}",
+                "$options": "i"
+            }
         universitiesInDB = self._collection.find(universityFilter)
         result = [university for university in universitiesInDB]
         return result
@@ -178,8 +183,8 @@ class UniversitiesCollectionController(BaseCollectionController):
             if comment is not None:
                 universityNewData["comment"] = comment
             universityNewData["updatedAt"] = datetime.datetime.now(datetime.timezone.utc)
-            resultUpdate = self._collection.update_one(universityFilter,{"$set": universityNewData})
-            if resultUpdate.acknowledged:
+            resultUpdate = self._collection.update_one(universityFilter, {"$set": universityNewData})
+            if resultUpdate.acknowledged and resultUpdate.matched_count != 0:
                 return True
             return False
         except Exception as e:
@@ -194,8 +199,8 @@ class UniversitiesCollectionController(BaseCollectionController):
             universityFilter = {
                 "_id": ObjectId(id_str)
             }
-            resultUpdate = self._collection.delete_one(universityFilter)
-            if resultUpdate.deleted_count:
+            resultDelete = self._collection.delete_one(universityFilter)
+            if resultDelete.deleted_count:
                 return True
             return False
         except Exception as e:
