@@ -1,31 +1,16 @@
 from bson import ObjectId
 from pymongo.collection import Collection
 import datetime
+from app.database.base_collection_controller import BaseCollectionController
 
-class AdminsCollectionController:
+class AdminsCollectionController(BaseCollectionController):
     def __init__(self, collection: Collection):
-        self.__collection = collection
-
-    def __check_collection(self):
-        if not self.__collection:
-            print("No collection admins found!")
-            return False
-        return True
-
-    def create_index(self, field: str) -> bool:
-        if not self.__check_collection:
-            return False
-        try:
-            self.__collection.create_index([(field, 1)], unique=True)
-            return True
-        except Exception as e:
-            print("Error create index:", e)
-            return False
+        super().__init__(collection)
 
     def add_admin(self, username: str, password: str) -> ObjectId | None:
         """Возвращает id если удалось добавить админа, иначе None.
         _id возвращается в виде ObjectId, так что необходимо перевести его в str."""
-        if not self.__check_collection:
+        if not self._check_collection:
             return None
         try:
 
@@ -35,7 +20,7 @@ class AdminsCollectionController:
                 "createdAt": datetime.datetime.now(datetime.timezone.utc)
             }
 
-            resultAdd = self.__collection.insert_one(admin)
+            resultAdd = self._collection.insert_one(admin)
             if resultAdd.acknowledged:
                 return resultAdd.inserted_id
             return None
@@ -47,36 +32,36 @@ class AdminsCollectionController:
         """Возвращает все поля найденного админа в виде словаря.
         Или None, если не удалось найти.
         _id возвращается в виде ObjectId, так что необходимо перевести его в str."""
-        if not self.__check_collection:
+        if not self._check_collection:
             return None
 
         adminFilter = {
             "username": username,
             "password_hash": password,
         }
-        adminInDB = self.__collection.find_one(adminFilter)
+        adminInDB = self._collection.find_one(adminFilter)
         return adminInDB
 
     def find_admin_by_username(self, username: str) -> dict | None:
         """Возвращает админа по username или None, если он не найден."""
-        if not self.__check_collection:
+        if not self._check_collection:
             return None
 
         adminFilter = {
             "username": username,
         }
-        adminInDB = self.__collection.find_one(adminFilter)
+        adminInDB = self._collection.find_one(adminFilter)
         return adminInDB
 
     def find_admin_by_id(self, idUser: str) -> dict | None:
         """Возвращает все поля найденного админа в виде словаря. Передавать id в виде str.
         Или None, если не удалось найти.
         _id возвращается в виде ObjectId, так что необходимо перевести его в str."""
-        if not self.__check_collection:
+        if not self._check_collection:
             return None
 
         adminFilter = {
             "_id": ObjectId(idUser)
         }
-        adminInDB = self.__collection.find_one(adminFilter)
+        adminInDB = self._collection.find_one(adminFilter)
         return adminInDB

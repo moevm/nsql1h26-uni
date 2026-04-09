@@ -24,7 +24,9 @@ validation_universities_schema = {
     "$jsonSchema": {
         "bsonType": "object",
         "required": ["name", "city", "has_dormitory",
-                     "military_dept", "website", "comment", "createdAt", "updatedAt"],
+                     "military_dept", "website", "foundation_year", "students_count",
+                     "faculties_count", "phone", "email", "comment", "rating", "programs_count",
+                     "createdAt", "updatedAt"],
         "properties": {
             "_id": {
                 "bsonType": "objectId",
@@ -47,6 +49,34 @@ validation_universities_schema = {
                 "bsonType": "string",
                 "maxLength": 255
             },
+            "foundation_year": {
+                "bsonType": "int",
+                "minimum": 0
+            },
+            "students_count": {
+                "bsonType": "int",
+                "minimum": 0
+            },
+            "faculties_count": {
+                "bsonType": "int",
+                "minimum": 0
+            },
+            "phone": {
+                "bsonType": "string",
+                "maxLength": 30
+            },
+            "email": {
+                "bsonType": "string",
+                "maxLength": 100
+            },
+            "rating": {
+                "bsonType": "double",
+                "minimum": 0
+            },
+            "programs_count": {
+                "bsonType": "int",
+                "minimum": 0
+            },
             "comment": {
                 "bsonType": "string",
                 "maxLength": 1024
@@ -65,14 +95,18 @@ validation_universities_schema = {
 validation_programs_schema = {
     "$jsonSchema": {
         "bsonType": "object",
-        "required": ["university_id", "name", "budget_places", "passing_score",
-                     "required_subjects", "createdAt", "updatedAt"],
+        "required": ["university_id", "code", "name", "budget_places", "paid_places", "passing_score",
+                     "form_of_education", "required_subjects", "comment", "createdAt", "updatedAt"],
         "properties": {
             "_id": {
                 "bsonType": "objectId"
             },
             "university_id": {
                 "bsonType": "objectId"
+            },
+            "code": {
+                "bsonType": "string",
+                "maxLength": 255
             },
             "name": {
                 "bsonType": "string",
@@ -82,9 +116,17 @@ validation_programs_schema = {
                 "bsonType": "int",
                 "minimum": 0
             },
+            "paid_places": {
+                "bsonType": "int",
+                "minimum": 0
+            },
             "passing_score": {
                 "bsonType": "int",
                 "minimum": 0
+            },
+            "form_of_education": {
+                "bsonType": "string",
+                "maxLength": 20
             },
             "required_subjects": {
                 "bsonType": "array",
