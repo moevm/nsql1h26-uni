@@ -196,7 +196,7 @@ def seed_default_programs(db):
             "budget_places": 25,
             "paid_places": 15,
             "passing_score": 290,
-            "form_of_education": "Очно",
+            "form_of_education": "Очная",
             "required_subjects": {
                 "Математика": 70,
                 "Информатика": 75,
@@ -210,7 +210,7 @@ def seed_default_programs(db):
             "budget_places": 5,
             "paid_places": 65,
             "passing_score": 270,
-            "form_of_education": "Очно",
+            "form_of_education": "Очная",
             "required_subjects": {
                 "Математика": 60,
                 "Информатика": 65,
@@ -224,7 +224,7 @@ def seed_default_programs(db):
             "budget_places": 15,
             "paid_places": 35,
             "passing_score": 288,
-            "form_of_education": "Очно",
+            "form_of_education": "Очная",
             "required_subjects": {
                 "Математика": 70,
                 "Информатика": 65,
@@ -238,7 +238,7 @@ def seed_default_programs(db):
             "budget_places": 16,
             "paid_places": 77,
             "passing_score": 110,
-            "form_of_education": "Очно",
+            "form_of_education": "Очная",
             "required_subjects": {
                 "Математика": 75,
                 "Обществознание": 55

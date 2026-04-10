@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getUniversity } from '../services/api';
+import { getProgramsByUniversity, getUniversity } from '../services/api';
 import styles from './UniversityDetailPage.module.css';
 
 const normalizeProgram = (program) => ({
@@ -74,7 +74,6 @@ const normalizeUniversity = (rawUniversity) => {
     programsCount: source.programs_count || source.programsCount || 0,
     createdAt: toReadableDate(source.created_at || source.createdAt),
     updatedAt: toReadableDate(source.updated_at || source.updatedAt),
-    programs: Array.isArray(source.programs) ? source.programs.map(normalizeProgram) : [],
   };
 };
 
@@ -106,8 +105,10 @@ const UniversityDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [university, setUniversity] = useState(null);
+  const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [programsError, setProgramsError] = useState(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showBudgetOnly, setShowBudgetOnly] = useState(false);
@@ -230,21 +231,39 @@ const UniversityDetailPage = () => {
     const loadUniversity = async () => {
       setLoading(true);
       setError(null);
+      setProgramsError(null);
 
       try {
-        const data = await getUniversity(id);
+        const [universityData, programsData] = await Promise.all([
+          getUniversity(id),
+          getProgramsByUniversity(id),
+        ]);
+
         if (!isMounted) {
           return;
         }
 
-        setUniversity(normalizeUniversity(data));
+        setUniversity(normalizeUniversity(universityData));
+        setPrograms(Array.isArray(programsData) ? programsData.map(normalizeProgram) : []);
       } catch (err) {
         if (!isMounted) {
           return;
         }
 
-        setUniversity(null);
-        setError(err.message || 'Университет не найден');
+        try {
+          const fallbackUniversity = await getUniversity(id);
+          if (!isMounted) {
+            return;
+          }
+
+          setUniversity(normalizeUniversity(fallbackUniversity));
+          setPrograms([]);
+          setProgramsError(err.message || 'Не удалось загрузить направления');
+        } catch (universityErr) {
+          setUniversity(null);
+          setPrograms([]);
+          setError(universityErr.message || 'Университет не найден');
+        }
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -289,7 +308,7 @@ const UniversityDetailPage = () => {
     };
   }, []);
 
-  const universityPrograms = university?.programs || [];
+  const universityPrograms = programs;
   const subjectOptions = useMemo(() => SUBJECT_OPTIONS, []);
   const educationFormOptions = useMemo(() => EDUCATION_FORM_OPTIONS, []);
 
@@ -483,6 +502,12 @@ const UniversityDetailPage = () => {
               Всего: {universityPrograms.length} направлений
             </div>
           </div>
+
+          {programsError && (
+            <div className={styles.emptyPrograms}>
+              ⚠️ {programsError}
+            </div>
+          )}
 
           <div className={styles.programsFilters}>
             <div className={styles.searchRow}>
