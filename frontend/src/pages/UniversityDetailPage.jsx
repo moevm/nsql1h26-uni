@@ -168,6 +168,17 @@ const getProgramSubjectBadges = (program) => {
     .filter(Boolean);
 };
 
+const getFiltersSignature = (filters) => {
+  const normalized = {
+    ...filters,
+    required_subjects: Array.isArray(filters.required_subjects)
+      ? [...filters.required_subjects].sort((a, b) => a.localeCompare(b, 'ru'))
+      : undefined,
+  };
+
+  return JSON.stringify(normalized);
+};
+
 const UniversityDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -176,6 +187,8 @@ const UniversityDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [programsError, setProgramsError] = useState(null);
+  const [programsLoading, setProgramsLoading] = useState(false);
+  const [appliedFiltersSignature, setAppliedFiltersSignature] = useState(getFiltersSignature({}));
 
   const [searchQuery, setSearchQuery] = useState('');
   const [minBudgetPlaces, setMinBudgetPlaces] = useState('');
@@ -291,6 +304,62 @@ const UniversityDetailPage = () => {
 
   const isPaidPlacesRangeValid = !paidPlacesValidationError;
 
+  const buildProgramsFilters = () => {
+    const filters = {};
+
+    if (searchQuery.trim()) {
+      filters.name = searchQuery.trim();
+    }
+
+    if (isBudgetPlacesRangeValid && minBudgetPlaces !== '') {
+      filters.min_budget_places = Number(minBudgetPlaces);
+    }
+    if (isBudgetPlacesRangeValid && maxBudgetPlaces !== '') {
+      filters.max_budget_places = Number(maxBudgetPlaces);
+    }
+
+    if (isPaidPlacesRangeValid && minPaidPlaces !== '') {
+      filters.min_paid_places = Number(minPaidPlaces);
+    }
+    if (isPaidPlacesRangeValid && maxPaidPlaces !== '') {
+      filters.max_paid_places = Number(maxPaidPlaces);
+    }
+
+    if (isScoreRangeValid && minPassingScore !== '') {
+      filters.min_passing_score = Number(minPassingScore);
+    }
+    if (isScoreRangeValid && maxPassingScore !== '') {
+      filters.max_passing_score = Number(maxPassingScore);
+    }
+
+    if (selectedEducationForm) {
+      filters.form_of_education = selectedEducationForm;
+    }
+
+    if (selectedSubjects.length > 0) {
+      filters.required_subjects = selectedSubjects;
+    }
+
+    return filters;
+  };
+
+  const fetchPrograms = async (filters = {}) => {
+    setProgramsLoading(true);
+    setProgramsError(null);
+
+    try {
+      const programsData = await getProgramsByUniversity(id, filters);
+      setPrograms(Array.isArray(programsData) ? programsData.map(normalizeProgram) : []);
+      setAppliedFiltersSignature(getFiltersSignature(filters));
+      setCurrentPage(1);
+    } catch (err) {
+      setPrograms([]);
+      setProgramsError(err.message || 'Не удалось загрузить направления');
+    } finally {
+      setProgramsLoading(false);
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -300,17 +369,14 @@ const UniversityDetailPage = () => {
       setProgramsError(null);
 
       try {
-        const [universityData, programsData] = await Promise.all([
-          getUniversity(id),
-          getProgramsByUniversity(id),
-        ]);
+        const universityData = await getUniversity(id);
 
         if (!isMounted) {
           return;
         }
 
         setUniversity(normalizeUniversity(universityData));
-        setPrograms(Array.isArray(programsData) ? programsData.map(normalizeProgram) : []);
+        await fetchPrograms();
       } catch (err) {
         if (!isMounted) {
           return;
@@ -323,8 +389,7 @@ const UniversityDetailPage = () => {
           }
 
           setUniversity(normalizeUniversity(fallbackUniversity));
-          setPrograms([]);
-          setProgramsError(err.message || 'Не удалось загрузить направления');
+          await fetchPrograms();
         } catch (universityErr) {
           setUniversity(null);
           setPrograms([]);
@@ -382,47 +447,10 @@ const UniversityDetailPage = () => {
     subject.toLowerCase().includes(subjectSearchQuery.toLowerCase())
   );
 
-  const filteredPrograms = universityPrograms.filter(program => {
-    if (searchQuery && !program.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
+  const currentFiltersSignature = getFiltersSignature(buildProgramsFilters());
+  const hasFilterChanges = currentFiltersSignature !== appliedFiltersSignature;
 
-    if (isBudgetPlacesRangeValid && minBudgetPlaces && program.budgetPlaces < Number(minBudgetPlaces)) {
-      return false;
-    }
-    if (isBudgetPlacesRangeValid && maxBudgetPlaces && program.budgetPlaces > Number(maxBudgetPlaces)) {
-      return false;
-    }
-    
-    if (isScoreRangeValid && minPassingScore && program.passingScore < Number(minPassingScore)) {
-      return false;
-    }
-    if (isScoreRangeValid && maxPassingScore && program.passingScore > Number(maxPassingScore)) {
-      return false;
-    }
-
-    if (isPaidPlacesRangeValid && minPaidPlaces && program.paidPlaces < Number(minPaidPlaces)) {
-      return false;
-    }
-    if (isPaidPlacesRangeValid && maxPaidPlaces && program.paidPlaces > Number(maxPaidPlaces)) {
-      return false;
-    }
-
-    if (selectedEducationForm && program.form !== selectedEducationForm) {
-      return false;
-    }
-
-    if (selectedSubjects.length > 0) {
-      const requiredSubjects = getProgramRequiredSubjects(program);
-      const isCompatible = requiredSubjects.every((subject) => selectedSubjects.includes(subject));
-
-      if (!isCompatible) {
-        return false;
-      }
-    }
-    
-    return true;
-  });
+  const filteredPrograms = universityPrograms;
   
   const totalPages = Math.ceil(filteredPrograms.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -444,7 +472,11 @@ const UniversityDetailPage = () => {
     setIsSubjectDropdownOpen(false);
     setSubjectSearchQuery('');
     setSelectedSubjects([]);
-    setCurrentPage(1);
+    fetchPrograms();
+  };
+
+  const handleApplyFilters = () => {
+    fetchPrograms(buildProgramsFilters());
   };
 
   const toggleSubject = (subject) => {
@@ -575,11 +607,10 @@ const UniversityDetailPage = () => {
               <input
                 type="text"
                 className={styles.searchInput}
-                placeholder="Поиск направлений по названию..."
+                placeholder="Название направления..."
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
-                  setCurrentPage(1);
                 }}
               />
             </div>
@@ -613,7 +644,6 @@ const UniversityDetailPage = () => {
                         step="1"
                         onChange={(e) => {
                           setMinBudgetPlaces(e.target.value);
-                          setCurrentPage(1);
                         }}
                       />
                       <span className={styles.budgetRangeSeparator}>—</span>
@@ -626,7 +656,6 @@ const UniversityDetailPage = () => {
                         step="1"
                         onChange={(e) => {
                           setMaxBudgetPlaces(e.target.value);
-                          setCurrentPage(1);
                         }}
                       />
                     </div>
@@ -685,7 +714,6 @@ const UniversityDetailPage = () => {
                         step="1"
                         onChange={(e) => {
                           setMinPassingScore(e.target.value);
-                          setCurrentPage(1);
                         }}
                       />
                       <span className={styles.scoreRangeSeparator}>—</span>
@@ -699,7 +727,6 @@ const UniversityDetailPage = () => {
                         step="1"
                         onChange={(e) => {
                           setMaxPassingScore(e.target.value);
-                          setCurrentPage(1);
                         }}
                       />
                     </div>
@@ -757,7 +784,6 @@ const UniversityDetailPage = () => {
                         step="1"
                         onChange={(e) => {
                           setMinPaidPlaces(e.target.value);
-                          setCurrentPage(1);
                         }}
                       />
                       <span className={styles.paidRangeSeparator}>—</span>
@@ -770,7 +796,6 @@ const UniversityDetailPage = () => {
                         step="1"
                         onChange={(e) => {
                           setMaxPaidPlaces(e.target.value);
-                          setCurrentPage(1);
                         }}
                       />
                     </div>
@@ -823,7 +848,6 @@ const UniversityDetailPage = () => {
                       className={`${styles.educationFormOption} ${selectedEducationForm === '' ? styles.educationFormOptionActive : ''}`}
                       onClick={() => {
                         setSelectedEducationForm('');
-                        setCurrentPage(1);
                         setIsEducationFormDropdownOpen(false);
                       }}
                     >
@@ -837,7 +861,6 @@ const UniversityDetailPage = () => {
                         className={`${styles.educationFormOption} ${selectedEducationForm === form ? styles.educationFormOptionActive : ''}`}
                         onClick={() => {
                           setSelectedEducationForm(form);
-                          setCurrentPage(1);
                           setIsEducationFormDropdownOpen(false);
                         }}
                       >
@@ -913,6 +936,13 @@ const UniversityDetailPage = () => {
 
               <button onClick={handleResetFilters} className={styles.resetFiltersBtn}>
                 Сбросить
+              </button>
+              <button
+                onClick={handleApplyFilters}
+                className={styles.applyFiltersBtn}
+                disabled={!hasFilterChanges || !isBudgetPlacesRangeValid || !isScoreRangeValid || !isPaidPlacesRangeValid || programsLoading}
+              >
+                {programsLoading ? 'Поиск...' : 'Применить'}
               </button>
             </div>
           </div>

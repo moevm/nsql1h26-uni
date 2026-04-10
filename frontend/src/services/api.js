@@ -34,8 +34,24 @@ export async function getUniversity(id) {
   return request(`/universities/${id}`);
 }
 
-export async function getProgramsByUniversity(universityId) {
+export async function getProgramsByUniversity(universityId, filters = {}) {
   const params = new URLSearchParams({ university_id: universityId });
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') {
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      if (value.length > 0) {
+        params.set(key, value.join(','));
+      }
+      return;
+    }
+
+    params.set(key, String(value));
+  });
+
   return request(`/programs/?${params.toString()}`);
 }
 

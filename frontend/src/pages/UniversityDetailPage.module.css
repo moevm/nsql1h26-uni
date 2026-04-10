@@ -699,6 +699,27 @@
   background: #eef2f6;
 }
 
+.applyFiltersBtn {
+  background: #1e3c5c;
+  border: 1px solid #1e3c5c;
+  border-radius: 40px;
+  padding: 8px 18px;
+  font-size: 0.9rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.applyFiltersBtn:hover:not(:disabled) {
+  background: #16314d;
+  border-color: #16314d;
+}
+
+.applyFiltersBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .programsTable {
   margin-top: 20px;
 }
