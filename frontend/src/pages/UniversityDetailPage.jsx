@@ -101,6 +101,73 @@ const getProgramRequiredSubjects = (program) => {
   return rawSubjects.map(normalizeSubjectName).filter(Boolean);
 };
 
+const SUBJECT_ABBREVIATIONS = {
+  'русский язык': 'РУ',
+  'математика': 'МА',
+  'физика': 'ФИ',
+  'химия': 'ХИ',
+  'история': 'ИС',
+  'обществознание': 'ОБ',
+  'информатика': 'ИКТ',
+  'информатика и икт': 'ИКТ',
+  'биология': 'БИ',
+  'география': 'ГЕ',
+  'литература': 'ЛИ',
+  'английский язык': 'АЯ',
+  'немецкий язык': 'НЯ',
+  'французский язык': 'ФЯ',
+  'испанский язык': 'ИЯ',
+  'китайский язык': 'КЯ',
+};
+
+const getSubjectAbbreviation = (subject) => {
+  const normalizedSubject = normalizeSubjectName(subject).toLowerCase();
+  if (!normalizedSubject) {
+    return '';
+  }
+
+  if (SUBJECT_ABBREVIATIONS[normalizedSubject]) {
+    return SUBJECT_ABBREVIATIONS[normalizedSubject];
+  }
+
+  const words = normalizedSubject
+    .replace(/[^a-zа-я0-9\s-]/gi, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (words.length === 0) {
+    return '';
+  }
+
+  if (words.length === 1) {
+    return words[0].slice(0, 3).toUpperCase();
+  }
+
+  return words
+    .slice(0, 3)
+    .map((word) => word[0].toUpperCase())
+    .join('');
+};
+
+const getProgramSubjectBadges = (program) => {
+  const uniqueSubjects = [...new Set(getProgramRequiredSubjects(program))];
+
+  return uniqueSubjects
+    .map((subject) => {
+      const abbr = getSubjectAbbreviation(subject);
+      if (!abbr) {
+        return null;
+      }
+
+      return {
+        key: `${subject}-${abbr}`,
+        full: subject,
+        abbr,
+      };
+    })
+    .filter(Boolean);
+};
+
 const UniversityDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -111,7 +178,6 @@ const UniversityDetailPage = () => {
   const [programsError, setProgramsError] = useState(null);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [showBudgetOnly, setShowBudgetOnly] = useState(false);
   const [minBudgetPlaces, setMinBudgetPlaces] = useState('');
   const [maxBudgetPlaces, setMaxBudgetPlaces] = useState('');
   const [isBudgetDropdownOpen, setIsBudgetDropdownOpen] = useState(false);
@@ -320,10 +386,6 @@ const UniversityDetailPage = () => {
     if (searchQuery && !program.name.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
-    
-    if (showBudgetOnly && program.budgetPlaces === 0) {
-      return false;
-    }
 
     if (isBudgetPlacesRangeValid && minBudgetPlaces && program.budgetPlaces < Number(minBudgetPlaces)) {
       return false;
@@ -368,7 +430,6 @@ const UniversityDetailPage = () => {
   
   const handleResetFilters = () => {
     setSearchQuery('');
-    setShowBudgetOnly(false);
     setMinBudgetPlaces('');
     setMaxBudgetPlaces('');
     setIsBudgetDropdownOpen(false);
@@ -524,18 +585,6 @@ const UniversityDetailPage = () => {
             </div>
 
             <div className={styles.filterGroup}>
-              <label className={styles.filterCheckbox}>
-                <input
-                  type="checkbox"
-                  checked={showBudgetOnly}
-                  onChange={(e) => {
-                    setShowBudgetOnly(e.target.checked);
-                    setCurrentPage(1);
-                  }}
-                />
-                <span>Только бюджетные места</span>
-              </label>
-
               <div className={styles.budgetDropdown} ref={budgetDropdownRef}>
                 <button
                   type="button"
@@ -881,23 +930,44 @@ const UniversityDetailPage = () => {
                   <span>Платных мест</span>
                   <span>Проходной балл</span>
                   <span>Форма</span>
+                  <span>Предметы</span>
                   <span></span>
                 </div>
 
-                {paginatedPrograms.map(program => (
-                  <div
-                    key={program.id}
-                    className={styles.programRow}
-                    onClick={() => handleProgramClick(program.id)}
-                  >
-                    <div className={styles.programName}>{program.name}</div>
-                    <div className={styles.programBudget}>{program.budgetPlaces}</div>
-                    <div className={styles.programPaid}>{program.paidPlaces}</div>
-                    <div className={styles.programScore}>{program.passingScore}</div>
-                    <div className={styles.programForm}>{program.form}</div>
-                    <div className={styles.programLink}>→</div>
-                  </div>
-                ))}
+                {paginatedPrograms.map(program => {
+                  const subjectBadges = getProgramSubjectBadges(program);
+
+                  return (
+                    <div
+                      key={program.id}
+                      className={styles.programRow}
+                      onClick={() => handleProgramClick(program.id)}
+                    >
+                      <div className={styles.programName}>{program.name}</div>
+                      <div className={styles.programBudget}>{program.budgetPlaces}</div>
+                      <div className={styles.programPaid}>{program.paidPlaces}</div>
+                      <div className={styles.programScore}>{program.passingScore}</div>
+                      <div className={styles.programForm}>{program.form}</div>
+                      <div className={styles.programSubjects}>
+                        {subjectBadges.length > 0 ? (
+                          subjectBadges.map((subjectBadge) => (
+                            <span
+                              key={subjectBadge.key}
+                              className={styles.subjectBadge}
+                              title={subjectBadge.full}
+                              aria-label={subjectBadge.full}
+                            >
+                              {subjectBadge.abbr}
+                            </span>
+                          ))
+                        ) : (
+                          '—'
+                        )}
+                      </div>
+                      <div className={styles.programLink}>→</div>
+                    </div>
+                  );
+                })}
               </div>
 
               {totalPages > 1 && (

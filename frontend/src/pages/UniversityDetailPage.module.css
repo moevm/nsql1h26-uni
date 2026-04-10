@@ -146,14 +146,6 @@
   align-items: center;
 }
 
-.filterCheckbox {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  color: #1e3c5c;
-}
-
 .budgetDropdown {
   position: relative;
   min-width: 260px;
@@ -713,7 +705,8 @@
 
 .tableHeader {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 0.5fr;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.2fr 0.5fr;
+  align-items: center;
   padding: 12px 16px;
   background: #f2f6fa;
   color: #64748b;
@@ -726,7 +719,7 @@
 
 .programRow {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 0.5fr;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.2fr 0.5fr;
   align-items: center;
   padding: 14px 16px;
   background: #f9fcff;
@@ -743,6 +736,36 @@
   transform: translateY(-1px);
 }
 
+.tableHeader > span:nth-child(1),
+.programRow > div:nth-child(1) {
+  justify-self: start;
+  text-align: left;
+}
+
+.tableHeader > span:nth-child(2),
+.tableHeader > span:nth-child(3),
+.tableHeader > span:nth-child(4),
+.tableHeader > span:nth-child(5),
+.programRow > div:nth-child(2),
+.programRow > div:nth-child(3),
+.programRow > div:nth-child(4),
+.programRow > div:nth-child(5) {
+  justify-self: center;
+  text-align: center;
+}
+
+.tableHeader > span:nth-child(6),
+.programRow > div:nth-child(6) {
+  justify-self: center;
+  text-align: left;
+}
+
+.tableHeader > span:nth-child(7),
+.programRow > div:nth-child(7) {
+  justify-self: end;
+  text-align: right;
+}
+
 .programName {
   font-weight: 600;
   color: #0b253b;
@@ -751,8 +774,34 @@
 .programBudget,
 .programPaid,
 .programScore,
-.programForm {
+.programForm,
+.programSubjects {
   color: #1e3c5c;
+}
+
+.programSubjects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-start;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.subjectBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid #d0dbe8;
+  background: #eef4fa;
+  color: #0b253b;
+  font-size: 0.78rem;
+  line-height: 1;
+  cursor: help;
 }
 
 .programLink {
@@ -878,7 +927,7 @@
   
   .tableHeader,
   .programRow {
-    grid-template-columns: 1.5fr 0.8fr 0.8fr 0.8fr 0.8fr 0.3fr;
+    grid-template-columns: 1.5fr 0.75fr 0.75fr 0.75fr 0.8fr 1fr 0.3fr;
     font-size: 0.85rem;
   }
   
