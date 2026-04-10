@@ -4,6 +4,7 @@ from pydantic import BaseModel
 class UniversityCreate(BaseModel):
     name: str
     city: str
+    address: Optional[str] = None
     has_dormitory: bool
     military_dept: bool
     website: str
@@ -14,6 +15,7 @@ class UniversityCreate(BaseModel):
 class UniversityUpdate(BaseModel):
     name: Optional[str] = None
     city: Optional[str] = None
+    address: Optional[str] = None
     has_dormitory: Optional[bool] = None
     military_dept: Optional[bool] = None
     website: Optional[str] = None

@@ -39,6 +39,10 @@ validation_universities_schema = {
                 "bsonType": "string",
                 "maxLength": 100,
             },
+            "address": {
+                "bsonType": "string",
+                "maxLength": 255
+            },
             "has_dormitory": {
                 "bsonType": "bool"
             },
