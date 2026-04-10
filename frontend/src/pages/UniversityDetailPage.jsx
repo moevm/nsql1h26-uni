@@ -1,186 +1,45 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styles from './UniversityDetailPage.module.css';
+import { getUniversity } from '../services/api';
 
-// Моковые данные для вузов
-const universitiesData = {
-  '1': {
-    id: '1',
-    name: 'МГУ им. Ломоносова',
-    city: 'Москва',
-    address: 'Москва, Ленинские горы, 1',
-    hasDormitory: true,
-    militaryDept: true,
-    website: 'msu.ru',
-    foundationYear: 1755,
-    studentsCount: 40000,
-    faculties: 15,
-    programsCount: 128,
-    createdAt: '01.09.2022',
-    updatedAt: '20.03.2025'
-  },
-  '2': {
-    id: '2',
-    name: 'МФТИ (Физтех)',
-    city: 'Долгопрудный',
-    address: 'Московская обл., г. Долгопрудный, Институтский пер., 9',
-    hasDormitory: true,
-    militaryDept: true,
-    website: 'mipt.ru',
-    foundationYear: 1951,
-    studentsCount: 7000,
-    faculties: 10,
-    programsCount: 85,
-    createdAt: '01.09.2022',
-    updatedAt: '15.03.2025'
-  },
-  '3': {
-    id: '3',
-    name: 'НИУ ВШЭ',
-    city: 'Москва',
-    address: 'Москва, ул. Мясницкая, 20',
-    hasDormitory: true,
-    militaryDept: false,
-    website: 'hse.ru',
-    foundationYear: 1992,
-    studentsCount: 45000,
-    faculties: 12,
-    programsCount: 156,
-    createdAt: '01.09.2023',
-    updatedAt: '10.03.2025'
-  },
-  '4': {
-    id: '4',
-    name: 'МГТУ им. Баумана',
-    city: 'Москва',
-    address: 'Москва, 2-я Бауманская ул., 5',
-    hasDormitory: true,
-    militaryDept: true,
-    website: 'bmstu.ru',
-    foundationYear: 1830,
-    studentsCount: 30000,
-    faculties: 15,
-    programsCount: 112,
-    createdAt: '01.09.2022',
-    updatedAt: '05.03.2025'
+const formatDateTime = (value) => {
+  if (!value) {
+    return 'нет данных';
   }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date);
 };
 
-// Моковые данные для направлений
-const programsData = {
-  '1': [
-    {
-      id: 'p1',
-      name: 'Прикладная математика',
-      budgetPlaces: 25,
-      paidPlaces: 15,
-      passingScore: 287,
-      form: 'Очная',
-      subjects: ['Математика (75)', 'Физика (70)', 'Русский язык (60)']
-    },
-    {
-      id: 'p2',
-      name: 'Фундаментальная физика',
-      budgetPlaces: 20,
-      paidPlaces: 10,
-      passingScore: 275,
-      form: 'Очная',
-      subjects: ['Физика (75)', 'Математика (70)', 'Русский язык (60)']
-    },
-    {
-      id: 'p3',
-      name: 'Лингвистика',
-      budgetPlaces: 15,
-      paidPlaces: 25,
-      passingScore: 260,
-      form: 'Очная',
-      subjects: ['Русский язык (70)', 'Иностранный язык (70)', 'Литература (60)']
-    },
-    {
-      id: 'p4',
-      name: 'Химия',
-      budgetPlaces: 30,
-      paidPlaces: 10,
-      passingScore: 255,
-      form: 'Очная',
-      subjects: ['Химия (75)', 'Математика (65)', 'Русский язык (60)']
-    },
-    {
-      id: 'p5',
-      name: 'Информатика и вычислительная техника',
-      budgetPlaces: 35,
-      paidPlaces: 20,
-      passingScore: 290,
-      form: 'Очная',
-      subjects: ['Математика (80)', 'Информатика (75)', 'Русский язык (65)']
-    }
-  ],
-  '2': [
-    {
-      id: 'p6',
-      name: 'Прикладная математика и физика',
-      budgetPlaces: 30,
-      paidPlaces: 15,
-      passingScore: 280,
-      form: 'Очная',
-      subjects: ['Математика (80)', 'Физика (75)', 'Русский язык (65)']
-    },
-    {
-      id: 'p7',
-      name: 'Информатика и вычислительная техника',
-      budgetPlaces: 25,
-      paidPlaces: 20,
-      passingScore: 275,
-      form: 'Очная',
-      subjects: ['Математика (75)', 'Информатика (70)', 'Русский язык (60)']
-    }
-  ],
-  '3': [
-    {
-      id: 'p8',
-      name: 'Экономика',
-      budgetPlaces: 40,
-      paidPlaces: 60,
-      passingScore: 285,
-      form: 'Очная',
-      subjects: ['Математика (75)', 'Обществознание (70)', 'Русский язык (65)']
-    },
-    {
-      id: 'p9',
-      name: 'Бизнес-информатика',
-      budgetPlaces: 25,
-      paidPlaces: 35,
-      passingScore: 270,
-      form: 'Очная',
-      subjects: ['Математика (70)', 'Информатика (65)', 'Русский язык (60)']
-    }
-  ],
-  '4': [
-    {
-      id: 'p10',
-      name: 'Машиностроение',
-      budgetPlaces: 50,
-      paidPlaces: 20,
-      passingScore: 245,
-      form: 'Очная',
-      subjects: ['Математика (65)', 'Физика (60)', 'Русский язык (55)']
-    },
-    {
-      id: 'p11',
-      name: 'Робототехника',
-      budgetPlaces: 20,
-      paidPlaces: 15,
-      passingScore: 265,
-      form: 'Очная',
-      subjects: ['Математика (70)', 'Физика (65)', 'Информатика (60)']
-    }
-  ]
-};
+const normalizeProgram = (program) => ({
+  id: program._id || program.id,
+  name: program.name || 'Без названия',
+  budgetPlaces: program.budget_places ?? 0,
+  paidPlaces: program.paid_places ?? 0,
+  passingScore: program.passing_score ?? 0,
+  form: program.form_of_education || 'Не указана',
+  subjects: Array.isArray(program.required_subjects)
+    ? program.required_subjects.map((subject) => `${subject.subject} (${subject.minimum_points})`)
+    : []
+});
 
 const UniversityDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const university = universitiesData[id];
+  const [university, setUniversity] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [showBudgetOnly, setShowBudgetOnly] = useState(false);
@@ -190,6 +49,66 @@ const UniversityDetailPage = () => {
   
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
+
+  useEffect(() => {
+    const fetchUniversity = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getUniversity(id);
+        setUniversity({
+          id: data._id,
+          name: data.name,
+          city: data.city,
+          address: data.address || 'не указан',
+          hasDormitory: Boolean(data.has_dormitory),
+          militaryDept: Boolean(data.military_dept),
+          website: data.website || 'не указан',
+          foundationYear: data.foundation_year ?? 'не указан',
+          studentsCount: data.students_count ?? 'не указано',
+          faculties: data.faculties_count ?? 'не указано',
+          programsCount: data.programs_count ?? 0,
+          phone: data.phone || 'не указан',
+          email: data.email || 'не указан',
+          createdAt: formatDateTime(data.createdAt),
+          updatedAt: formatDateTime(data.updatedAt),
+          programs: Array.isArray(data.programs) ? data.programs.map(normalizeProgram) : []
+        });
+      } catch (err) {
+        setError(err.message || 'Ошибка при загрузке данных университета');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchUniversity();
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.errorMessage}>
+          <h2>Загрузка данных...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.errorMessage}>
+          <h2>Ошибка загрузки</h2>
+          <p>{error}</p>
+          <button onClick={() => navigate('/')} className={styles.backButton}>
+            Вернуться на главную
+          </button>
+        </div>
+      </div>
+    );
+  }
   
   if (!university) {
     return (
@@ -204,7 +123,7 @@ const UniversityDetailPage = () => {
     );
   }
   
-  const universityPrograms = programsData[id] || [];
+  const universityPrograms = university.programs || [];
   
   const filteredPrograms = universityPrograms.filter(program => {
     if (searchQuery && !program.name.toLowerCase().includes(searchQuery.toLowerCase())) {
@@ -303,11 +222,11 @@ const UniversityDetailPage = () => {
                 </div>
                 <div className={styles.infoRow}>
                     <span className={styles.infoLabel}>Приемная комиссия:</span>
-                    <span className={styles.infoValue}>+7 (495) 939-10-00</span>
+                  <span className={styles.infoValue}>{university.phone}</span>
                 </div>
                 <div className={styles.infoRow}>
                     <span className={styles.infoLabel}>Email:</span>
-                    <span className={styles.infoValue}>priem@{university.website}</span>
+                  <span className={styles.infoValue}>{university.email}</span>
                 </div>
             </div>
         </div>
