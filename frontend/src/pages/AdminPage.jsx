@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styles from './AdminPage.module.css';
-import { createProgram, createUniversity, getUniversities } from '../services/api';
+import { createProgram, createUniversity, getPrograms, getUniversities } from '../services/api';
 import { getAdminSession } from '../services/auth';
 
 const PHONE_REGEX = /^\+?[0-9()\-\s]{7,20}$/;
@@ -60,6 +60,8 @@ const AdminPage = () => {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [programSearchQuery, setProgramSearchQuery] = useState('');
+  const [currentProgramPage, setCurrentProgramPage] = useState(1);
   const [isAddUniversityOpen, setIsAddUniversityOpen] = useState(false);
   const [universityForm, setUniversityForm] = useState(INITIAL_UNIVERSITY_FORM);
   const [isAddProgramOpen, setIsAddProgramOpen] = useState(false);
@@ -69,7 +71,11 @@ const AdminPage = () => {
   const [activeSubjectDropdownIndex, setActiveSubjectDropdownIndex] = useState(null);
   const [programSubmitLoading, setProgramSubmitLoading] = useState(false);
   const [programSubmitError, setProgramSubmitError] = useState(null);
+  const [programs, setPrograms] = useState([]);
+  const [programsLoading, setProgramsLoading] = useState(true);
+  const [programsError, setProgramsError] = useState(null);
   const itemsPerPage = 4;
+  const programItemsPerPage = 4;
 
   const fetchUniversities = async () => {
     try {
@@ -95,15 +101,63 @@ const AdminPage = () => {
 
   useEffect(() => {
     fetchUniversities();
+    fetchPrograms();
   }, []);
+
+  const fetchPrograms = async () => {
+    try {
+      setProgramsLoading(true);
+      setProgramsError(null);
+      const data = await getPrograms();
+      const transformedData = data.map((program) => ({
+        id: program._id,
+        universityId: program.university_id,
+        code: program.code || '-',
+        name: program.name || 'Без названия',
+        form: program.form_of_education || '-',
+        passingScore: program.passing_score ?? 0,
+        budgetPlaces: program.budget_places ?? 0,
+        paidPlaces: program.paid_places ?? 0,
+        updatedAt: program.updatedAt ? new Date(program.updatedAt).toLocaleDateString('ru-RU') : '-',
+      }));
+      setPrograms(transformedData);
+    } catch (err) {
+      setProgramsError(err.message || 'Ошибка при загрузке направлений');
+      console.error('Ошибка загрузки направлений:', err);
+    } finally {
+      setProgramsLoading(false);
+    }
+  };
 
   const filteredUniversities = universities.filter(uni =>
     uni.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const getUniversityNameById = (universityId) => {
+    const university = universities.find((item) => item.id === universityId);
+    return university?.name || 'Неизвестный вуз';
+  };
+
+  const filteredPrograms = programs.filter((program) => {
+    const query = programSearchQuery.trim().toLowerCase();
+    if (!query) {
+      return true;
+    }
+
+    const universityName = getUniversityNameById(program.universityId).toLowerCase();
+    return (
+      program.name.toLowerCase().includes(query)
+      || program.code.toLowerCase().includes(query)
+      || universityName.includes(query)
+    );
+  });
+
   const totalPages = Math.ceil(filteredUniversities.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedUniversities = filteredUniversities.slice(startIndex, startIndex + itemsPerPage);
+  const totalProgramPages = Math.ceil(filteredPrograms.length / programItemsPerPage);
+  const programStartIndex = (currentProgramPage - 1) * programItemsPerPage;
+  const paginatedPrograms = filteredPrograms.slice(programStartIndex, programStartIndex + programItemsPerPage);
 
   const handleEditUniversity = (id) => {
     console.log('Редактирование вуза:', id);
@@ -112,6 +166,16 @@ const AdminPage = () => {
 
   const handleDeleteUniversity = (id) => {
     console.log('Удаление вуза:', id);
+    // TODO: Реализовать удаление
+  };
+
+  const handleEditProgram = (id) => {
+    console.log('Редактирование направления:', id);
+    // TODO: Реализовать редактирование
+  };
+
+  const handleDeleteProgram = (id) => {
+    console.log('Удаление направления:', id);
     // TODO: Реализовать удаление
   };
 
@@ -305,6 +369,9 @@ const AdminPage = () => {
       );
 
       handleCloseAddProgram();
+      await fetchPrograms();
+      await fetchUniversities();
+      setCurrentProgramPage(1);
     } catch (requestError) {
       setProgramSubmitError(requestError.message || 'Не удалось создать направление');
     } finally {
@@ -537,11 +604,113 @@ const AdminPage = () => {
             </button>
           </div>
 
-          <input className={styles.searchInput} placeholder="Поиск направления..." disabled />
+          <input
+            className={styles.searchInput}
+            placeholder="Поиск направления..."
+            value={programSearchQuery}
+            onChange={(e) => {
+              setProgramSearchQuery(e.target.value);
+              setCurrentProgramPage(1);
+            }}
+          />
 
-          <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
-            📋 Управление направлениями скоро будет доступно
-          </div>
+          {programsLoading && (
+            <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
+              ⏳ Загрузка направлений...
+            </div>
+          )}
+
+          {programsError && (
+            <div style={{ textAlign: 'center', padding: '30px', color: '#d32f2f' }}>
+              ❌ {programsError}
+            </div>
+          )}
+
+          {!programsLoading && !programsError && filteredPrograms.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
+              📭 Направления не найдены
+            </div>
+          )}
+
+          {!programsLoading && !programsError && filteredPrograms.length > 0 && (
+            <>
+              <div className={styles.programTableHeader}>
+                <span>Код</span>
+                <span>Название</span>
+                <span>Вуз</span>
+                <span>Форма</span>
+                <span>Балл</span>
+                <span>Места (б/п)</span>
+                <span>Изменен</span>
+                <span>Действия</span>
+              </div>
+
+              {paginatedPrograms.map((program) => (
+                <div key={program.id} className={styles.programRow}>
+                  <span>{program.code}</span>
+                  <span>{program.name}</span>
+                  <span>{getUniversityNameById(program.universityId)}</span>
+                  <span>{program.form}</span>
+                  <span>{program.passingScore}</span>
+                  <span>{program.budgetPlaces}/{program.paidPlaces}</span>
+                  <span>{program.updatedAt}</span>
+                  <div className={styles.actionBtns}>
+                    <button
+                      className={styles.actionBtn}
+                      onClick={() => handleEditProgram(program.id)}
+                      title="Редактировать"
+                    >
+                      ✎
+                    </button>
+                    <button
+                      className={styles.actionBtn}
+                      onClick={() => handleDeleteProgram(program.id)}
+                      title="Удалить"
+                    >
+                      🗑
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {totalProgramPages > 1 && (
+                <div className={styles.pagination}>
+                  <span style={{ color: '#4b637a' }}>
+                    {programStartIndex + 1}-{Math.min(programStartIndex + programItemsPerPage, filteredPrograms.length)} из {filteredPrograms.length}
+                  </span>
+                  <div className={styles.pageNumbers}>
+                    {Array.from({ length: Math.min(totalProgramPages, 5) }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        className={`${styles.pageBtn} ${currentProgramPage === page ? styles.active : ''}`}
+                        onClick={() => setCurrentProgramPage(page)}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    {totalProgramPages > 5 && (
+                      <>
+                        <span className={styles.dots}>⋯</span>
+                        <button
+                          className={styles.pageBtn}
+                          onClick={() => setCurrentProgramPage(totalProgramPages)}
+                        >
+                          {totalProgramPages}
+                        </button>
+                      </>
+                    )}
+                    <button
+                      className={styles.pageBtn}
+                      onClick={() => setCurrentProgramPage(Math.min(currentProgramPage + 1, totalProgramPages))}
+                      disabled={currentProgramPage === totalProgramPages}
+                    >
+                      →
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {isAddProgramOpen && (

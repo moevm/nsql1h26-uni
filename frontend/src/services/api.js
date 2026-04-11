@@ -28,8 +28,19 @@ export async function loginAdmin(payload) {
   });
 }
 
-export async function getUniversities() {
-  return request('/universities');
+export async function getUniversities(filters = {}) {
+  const params = new URLSearchParams();
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') {
+      return;
+    }
+
+    params.set(key, String(value));
+  });
+
+  const query = params.toString();
+  return request(query ? `/universities/?${query}` : '/universities');
 }
 
 export async function getUniversity(id) {
@@ -38,6 +49,28 @@ export async function getUniversity(id) {
 
 export async function getProgram(id) {
   return request(`/programs/${id}`);
+}
+
+export async function getPrograms(filters = {}) {
+  const params = new URLSearchParams();
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') {
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      if (value.length > 0) {
+        params.set(key, value.join(','));
+      }
+      return;
+    }
+
+    params.set(key, String(value));
+  });
+
+  const query = params.toString();
+  return request(query ? `/programs/?${query}` : '/programs/');
 }
 
 export async function createUniversity(payload, adminId) {
