@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import AboutPage from './pages/AboutPage';
 import UniversitiesPage from './pages/UniversitiesPage';
 import UniversityDetailPage from './pages/UniversityDetailPage';
+import ProgramDetailPage from './pages/ProgramDetailPage';
 import AdminPage from './pages/AdminPage';
 import { isAdminAuthenticated } from './services/auth';
 
@@ -57,6 +58,11 @@ function App() {
         <Route path="/universities/:id" element={
           <Layout>
             <UniversityDetailPage />
+          </Layout>
+        } />
+        <Route path="/program/:id" element={
+          <Layout>
+            <ProgramDetailPage />
           </Layout>
         } />
         <Route path="/about" element={

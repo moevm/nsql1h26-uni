@@ -1,0 +1,202 @@
+.page {
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.breadcrumbs {
+  margin-bottom: 20px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.breadcrumbLink {
+  background: none;
+  border: none;
+  color: #1e3c5c;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.breadcrumbSeparator {
+  margin: 0 8px;
+}
+
+.breadcrumbCurrent {
+  color: #64748b;
+}
+
+.programHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding: 20px;
+  background: #f2f6fa;
+  border-radius: 16px;
+}
+
+.programTitle h1 {
+  font-size: 2rem;
+  color: #0b253b;
+  margin-bottom: 8px;
+}
+
+.programMeta {
+  display: flex;
+  gap: 15px;
+  color: #64748b;
+  flex-wrap: wrap;
+}
+
+.infoSection {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+  margin-bottom: 30px;
+}
+
+.infoCard {
+  background: #f9fcff;
+  border: 1px solid #e2eaf2;
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.infoCard h3 {
+  font-size: 1.2rem;
+  color: #0b253b;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e2eaf2;
+}
+
+.infoRow {
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.infoLabel {
+  width: 150px;
+  color: #64748b;
+}
+
+.infoValue {
+  color: #1e3c5c;
+  font-weight: 500;
+}
+
+.historySection {
+  background: #f9fcff;
+  border: 1px solid #e2eaf2;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.historySection h3 {
+  font-size: 1.2rem;
+  color: #0b253b;
+  margin-bottom: 15px;
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.historyItem {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 10px 0;
+  border-bottom: 1px dashed #e2eaf2;
+}
+
+.historyItem:last-child {
+  border-bottom: none;
+}
+
+.historyDate {
+  min-width: 100px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.historyStatus {
+  background: #eef2f6;
+  padding: 4px 12px;
+  border-radius: 40px;
+  font-size: 0.9rem;
+  color: #1e3c5c;
+}
+
+.historyComment {
+  color: #334155;
+  font-size: 0.95rem;
+}
+
+.datesFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 20px;
+  margin: 20px 0;
+  padding-top: 15px;
+  border-top: 1px solid #eef2f6;
+  color: #64748b;
+  font-size: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.progressLine {
+  height: 4px;
+  background: #e2eaf2;
+  border-radius: 4px;
+  margin: 30px 0 5px;
+  overflow: hidden;
+}
+
+.progressFill {
+  width: 100%;
+  height: 4px;
+  background: #1e3c5c;
+}
+
+.loadingStatus {
+  text-align: right;
+  font-size: 0.9rem;
+  color: #4b637a;
+}
+
+.stateBox {
+  text-align: center;
+  padding: 50px;
+  color: #64748b;
+}
+
+.stateBoxError {
+  text-align: center;
+  padding: 50px;
+  color: #991b1b;
+}
+
+.actionBtn {
+  margin-top: 14px;
+  padding: 10px 16px;
+  border-radius: 30px;
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #1e3c5c;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .infoSection {
+    grid-template-columns: 1fr;
+  }
+}

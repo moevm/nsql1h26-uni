@@ -36,6 +36,10 @@ export async function getUniversity(id) {
   return request(`/universities/${id}`);
 }
 
+export async function getProgram(id) {
+  return request(`/programs/${id}`);
+}
+
 export async function createUniversity(payload, adminId) {
   return request('/universities/', {
     method: 'POST',
