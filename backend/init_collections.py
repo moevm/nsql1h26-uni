@@ -42,6 +42,7 @@ def seed_default_universities(db):
         {
             "name": "МГУ им. Ломоносова",
             "city": "Москва",
+            "address": "Ленинские горы, д. 1",
             "has_dormitory": True,
             "military_dept": True,
             "website": "https://www.msu.ru",
@@ -56,6 +57,7 @@ def seed_default_universities(db):
         {
             "name": "МФТИ (Физтех)",
             "city": "Долгопрудный",
+            "address": "Институтский пер., д. 9",
             "has_dormitory": True,
             "military_dept": True,
             "website": "https://www.mipt.ru",
@@ -70,6 +72,7 @@ def seed_default_universities(db):
         {
             "name": "НИУ ВШЭ",
             "city": "Москва",
+            "address": "ул. Мясницкая, д. 20",
             "has_dormitory": True,
             "military_dept": False,
             "website": "https://www.hse.ru",
@@ -84,6 +87,7 @@ def seed_default_universities(db):
         {
             "name": "МГТУ им. Баумана",
             "city": "Москва",
+            "address": "2-я Бауманская ул., д. 5",
             "has_dormitory": True,
             "military_dept": True,
             "website": "https://www.bmstu.ru",
@@ -98,6 +102,7 @@ def seed_default_universities(db):
         {
             "name": "СПбГУ",
             "city": "Санкт-Петербург",
+            "address": "Университетская наб., д. 7-9",
             "has_dormitory": True,
             "military_dept": False,
             "website": "https://spbu.ru",
@@ -112,6 +117,7 @@ def seed_default_universities(db):
         {
             "name": "НГУ",
             "city": "Новосибирск",
+            "address": "ул. Пирогова, д. 1",
             "has_dormitory": True,
             "military_dept": False,
             "website": "https://www.nsu.ru",
@@ -126,14 +132,29 @@ def seed_default_universities(db):
     ]
 
     count = 0
+    updated_count = 0
     for uni in default_universities:
-        if universities_controller.find_university_by_name(uni["name"]):
-            print(f"University '{uni['name']}' already exists, skipping")
+        existing_university = universities_controller.find_university_by_name(uni["name"])
+        if existing_university:
+            current_address = existing_university.get("address")
+            if current_address is None or str(current_address).strip() == "":
+                success = universities_controller.update_university(
+                    id_str=str(existing_university["_id"]),
+                    address=uni["address"]
+                )
+                if success:
+                    updated_count += 1
+                    print(f"University '{uni['name']}' updated with address")
+                else:
+                    print(f"Failed to update address for university '{uni['name']}'")
+            else:
+                print(f"University '{uni['name']}' already has address, skipping")
             continue
 
         result = universities_controller.add_university(
             name=uni["name"],
             city=uni["city"],
+            address=uni["address"],
             has_dormitory=uni["has_dormitory"],
             military_dept=uni["military_dept"],
             website=uni["website"],
@@ -157,6 +178,9 @@ def seed_default_universities(db):
     else:
         print("No new universities were added")
 
+    if updated_count > 0:
+        print(f"Total {updated_count} universities updated with address")
+
 def seed_default_programs(db):
     programs_controller = db.get_programs_collection()
     universities_controller = db.get_universities_collection()
@@ -172,7 +196,7 @@ def seed_default_programs(db):
             "budget_places": 25,
             "paid_places": 15,
             "passing_score": 290,
-            "form_of_education": "Очно",
+            "form_of_education": "Очная",
             "required_subjects": {
                 "Математика": 70,
                 "Информатика": 75,
@@ -186,7 +210,7 @@ def seed_default_programs(db):
             "budget_places": 5,
             "paid_places": 65,
             "passing_score": 270,
-            "form_of_education": "Очно",
+            "form_of_education": "Очная",
             "required_subjects": {
                 "Математика": 60,
                 "Информатика": 65,
@@ -200,7 +224,7 @@ def seed_default_programs(db):
             "budget_places": 15,
             "paid_places": 35,
             "passing_score": 288,
-            "form_of_education": "Очно",
+            "form_of_education": "Очная",
             "required_subjects": {
                 "Математика": 70,
                 "Информатика": 65,
@@ -214,7 +238,7 @@ def seed_default_programs(db):
             "budget_places": 16,
             "paid_places": 77,
             "passing_score": 110,
-            "form_of_education": "Очно",
+            "form_of_education": "Очная",
             "required_subjects": {
                 "Математика": 75,
                 "Обществознание": 55

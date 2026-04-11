@@ -19,21 +19,28 @@
 
 ## Docker запуск (backend + db + frontend)
 
-### Production-like режим
-
+### Быстрый запуск 
 ```bash
-docker compose --profile prod up --build
+docker compose build --no-cache && docker compose up
 ```
 
-Перед запуском можно скопировать [`.env.example`](.env.example) в `.env` и при необходимости поменять seed-логин/пароль.
+После запуска приложение будет доступно по адресам:
 
 - Frontend: `http://localhost:3000`
-- Backend (FastAPI): `http://localhost:8080`
+- Backend (FastAPI): `http://localhost:8080/docs`
+- MongoDB: `mongodb://db:27017`
 
-### Dev режим  с hot-reload
+**Учётные данные для входа (установлены автоматически):**
+- Логин: `admin`
+- Пароль: `admin123`
+
+### Остановка приложения
 
 ```bash
-docker compose --profile dev up --build
+docker compose down
 ```
 
-Изменения в коде применяются автоматически без пересборки образа.
+Для удаления данных БД при остановке:
+```bash
+docker compose down -v
+```

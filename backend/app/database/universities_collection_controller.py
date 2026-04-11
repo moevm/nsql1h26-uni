@@ -10,8 +10,8 @@ class UniversitiesCollectionController(BaseCollectionController):
         super().__init__(collection)
 
     def add_university(self, name: str, city: str, has_dormitory: bool, military_dept: bool,
-                       website: str, foundation_year: int, students_count: int, faculties_count: int,
-                       phone: str, email: str, comment: str = None, rating: float = None,
+                       website: str, foundation_year: int = None, students_count: int = None, faculties_count: int = None,
+                       phone: str = None, email: str = None, address: str = None, comment: str = None, rating: float = None,
                        programs_count: int = None) -> ObjectId | None:
         """Вернет id университета в случае успешного добавление. Иначе - None."""
         if not self._check_collection():
@@ -20,14 +20,15 @@ class UniversitiesCollectionController(BaseCollectionController):
             university = {
                 "name": name,
                 "city": city,
+                "address": address if address else "",
                 "has_dormitory": has_dormitory,
                 "military_dept": military_dept,
                 "website": website,
-                "foundation_year": foundation_year,
-                "students_count": students_count,
-                "faculties_count": faculties_count,
-                "phone": phone,
-                "email": email,
+                "foundation_year": foundation_year if foundation_year is not None else 0,
+                "students_count": students_count if students_count is not None else 0,
+                "faculties_count": faculties_count if faculties_count is not None else 0,
+                "phone": phone if phone else "",
+                "email": email if email else "",
                 "comment": comment if comment else "",
                 "rating": rating if rating is not None else 4.5,
                 "programs_count": programs_count if programs_count is not None else 0,
@@ -140,7 +141,7 @@ class UniversitiesCollectionController(BaseCollectionController):
         result = [university for university in universitiesInDB]
         return result
 
-    def update_university(self, id_str: str, name: str = None, city: str = None, has_dormitory: bool = None,
+    def update_university(self, id_str: str, name: str = None, city: str = None, address: str = None, has_dormitory: bool = None,
                           foundation_year: int = None, students_count: int = None,
                           faculties_count: int = None,
                           phone: str = None, email: str = None,
@@ -158,6 +159,8 @@ class UniversitiesCollectionController(BaseCollectionController):
                 universityNewData["name"] = name
             if city:
                 universityNewData["city"] = city
+            if address is not None:
+                universityNewData["address"] = address
             if has_dormitory is not None:
                 universityNewData["has_dormitory"] = has_dormitory
             if military_dept is not None:

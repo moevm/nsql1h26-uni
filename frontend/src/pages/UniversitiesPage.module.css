@@ -132,6 +132,230 @@
   background: #eef2f6;
 }
 
+.applyBtn {
+  background: #1e3c5c;
+  border: 1px solid #1e3c5c;
+  border-radius: 40px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.applyBtn:hover:not(:disabled) {
+  background: #162d48;
+}
+
+.applyBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ratingDropdown,
+.programsDropdown {
+  position: relative;
+  min-width: 280px;
+  flex: 1 1 280px;
+}
+
+.ratingDropdownTrigger,
+.programsDropdownTrigger {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d0dbe8;
+  border-radius: 40px;
+  background: white;
+  color: #1e3c5c;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.ratingDropdownTrigger:hover,
+.programsDropdownTrigger:hover {
+  background: #f8fafc;
+}
+
+.ratingDropdownTrigger:focus,
+.programsDropdownTrigger:focus {
+  outline: 2px solid #a3c0e0;
+}
+
+.ratingDropdownChevron,
+.programsDropdownChevron {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.ratingDropdownPanel,
+.programsDropdownPanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  width: min(400px, 100%);
+  background: white;
+  border: 1px solid #d0dbe8;
+  border-radius: 16px;
+  box-shadow: 0 16px 30px rgba(8, 28, 48, 0.12);
+  padding: 14px;
+}
+
+.rangeGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.rangeInput {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid #d0dbe8;
+  border-radius: 40px;
+  font-size: 0.9rem;
+}
+
+.rangeInput:focus {
+  outline: 2px solid #a3c0e0;
+}
+
+.rangeSeparator {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.dropdownError {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.dropdownFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid #eef2f6;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.dropdownClose {
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #1e3c5c;
+  border-radius: 40px;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dropdownClose:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: #f8fafc;
+  color: #94a3b8;
+}
+
+.dormitoryDropdown,
+.militaryDeptDropdown {
+  position: relative;
+  min-width: 240px;
+  flex: 0 1 auto;
+}
+
+.dormitoryDropdownTrigger,
+.militaryDeptDropdownTrigger {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d0dbe8;
+  border-radius: 40px;
+  background: white;
+  color: #1e3c5c;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.dormitoryDropdownTrigger:hover,
+.militaryDeptDropdownTrigger:hover {
+  background: #f8fafc;
+}
+
+.dormitoryDropdownTrigger:focus,
+.militaryDeptDropdownTrigger:focus {
+  outline: 2px solid #a3c0e0;
+}
+
+.dormitoryDropdownChevron,
+.militaryDeptDropdownChevron {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.dormitoryDropdownPanel,
+.militaryDeptDropdownPanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  width: min(280px, 100%);
+  background: white;
+  border: 1px solid #d0dbe8;
+  border-radius: 16px;
+  box-shadow: 0 16px 30px rgba(8, 28, 48, 0.12);
+  padding: 10px;
+}
+
+.optionsGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.optionButton {
+  padding: 10px 14px;
+  border: 1px solid #d0dbe8;
+  background: white;
+  border-radius: 10px;
+  color: #1e3c5c;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.optionButton:hover {
+  background: #eef4fb;
+  border-color: #1e3c5c;
+}
+
+.optionButton.optionButtonActive {
+  background: #1e3c5c;
+  color: white;
+  border-color: #1e3c5c;
+  font-weight: 600;
+}
+
 .resultBar {
   display: flex;
   justify-content: space-between;

@@ -129,6 +129,7 @@ async def create_university(
     university_id = universities_controller.add_university(
         name=university.name,
         city=university.city,
+        address=university.address,
         has_dormitory=university.has_dormitory,
         military_dept=university.military_dept,
         website=university.website,
@@ -168,6 +169,7 @@ async def update_university(
         id_str=university_id,
         name=university.name,
         city=university.city,
+        address=university.address,
         has_dormitory=university.has_dormitory,
         military_dept=university.military_dept,
         website=university.website,
