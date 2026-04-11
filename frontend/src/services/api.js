@@ -46,6 +46,16 @@ export async function createUniversity(payload, adminId) {
   });
 }
 
+export async function createProgram(payload, adminId) {
+  return request('/programs/', {
+    method: 'POST',
+    headers: {
+      'x-user-id': adminId,
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function getProgramsByUniversity(universityId, filters = {}) {
   const params = new URLSearchParams({ university_id: universityId });
 

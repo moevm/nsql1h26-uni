@@ -349,6 +349,50 @@
   padding: 8px 10px;
 }
 
+.autocompleteWrapper {
+  position: relative;
+}
+
+.autocompleteList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  border: 1px solid #d0dbe8;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.autocompleteItem {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: white;
+  color: #1e3c5c;
+  font-size: 0.92rem;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #eef2f6;
+}
+
+.autocompleteItem:last-child {
+  border-bottom: none;
+}
+
+.autocompleteItem:hover {
+  background: #f8fafc;
+}
+
+.autocompleteEmpty {
+  padding: 10px 12px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
 .formGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -365,6 +409,7 @@
 }
 
 .formField input,
+.formField select,
 .formField textarea {
   border: 1px solid #d0dbe8;
   border-radius: 12px;
@@ -372,6 +417,7 @@
   font-size: 0.95rem;
   font-family: inherit;
   font-weight: 400;
+  background: white;
 }
 
 .formField textarea {
@@ -399,6 +445,56 @@
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 0.9rem;
+}
+
+.addInlineBtn {
+  width: fit-content;
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #1e3c5c;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.addInlineBtn:hover {
+  background: #f8fafc;
+}
+
+.subjectRow {
+  border: 1px solid #e2eaf2;
+  background: #fbfdff;
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.subjectHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #1e3c5c;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.removeInlineBtn {
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #b91c1c;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.removeInlineBtn:hover {
+  background: #ffe4e6;
 }
 
 .modalActions {
