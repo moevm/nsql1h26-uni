@@ -89,10 +89,8 @@ class UniversitiesCollectionController(BaseCollectionController):
         universityFilter = {}
         if name:
             universityFilter["name"] = {
-                "name": {
-                    "$regex": f"{name}",
-                    "$options": "i"
-                }
+                "$regex": f"{name}",
+                "$options": "i"
             }
         if city:
             universityFilter["city"] = {

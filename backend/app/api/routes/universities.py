@@ -24,13 +24,60 @@ async def get_current_admin(
     return admin
 
 @router.get("/")
-async def get_all_universities(db: UniversitiesDataBase = Depends(get_db_connection)):
+async def get_all_universities(
+    name: str | None = None,
+    city: str | None = None,
+    has_dormitory: bool | None = None,
+    military_dept: bool | None = None,
+    min_rating: float | None = None,
+    max_rating: float | None = None,
+    min_programs_count: int | None = None,
+    max_programs_count: int | None = None,
+    db: UniversitiesDataBase = Depends(get_db_connection),
+):
     """Получить все университеты"""
     universities_controller = db.get_universities_collection()
     if not universities_controller:
         raise HTTPException(status_code=500, detail="База данных недоступна")
 
-    universities = universities_controller.find_universities_by_filters()
+    if min_rating is not None and (min_rating < 0 or min_rating > 5):
+        raise HTTPException(status_code=400, detail="Минимальный рейтинг должен быть в диапазоне от 0 до 5")
+
+    if max_rating is not None and (max_rating < 0 or max_rating > 5):
+        raise HTTPException(status_code=400, detail="Максимальный рейтинг должен быть в диапазоне от 0 до 5")
+
+    if min_rating is not None and max_rating is not None and max_rating < min_rating:
+        raise HTTPException(status_code=400, detail="Максимальный рейтинг должен быть больше или равен минимальному")
+
+    if min_programs_count is not None and min_programs_count < 0:
+        raise HTTPException(status_code=400, detail="Минимальное количество направлений не может быть отрицательным")
+
+    if max_programs_count is not None and max_programs_count < 0:
+        raise HTTPException(status_code=400, detail="Максимальное количество направлений не может быть отрицательным")
+
+    if (
+        min_programs_count is not None
+        and max_programs_count is not None
+        and max_programs_count < min_programs_count
+    ):
+        raise HTTPException(status_code=400, detail="Максимум направлений должен быть больше или равен минимуму")
+
+    rating = None
+    if min_rating is not None or max_rating is not None:
+        rating = (min_rating, max_rating)
+
+    programs_count = None
+    if min_programs_count is not None or max_programs_count is not None:
+        programs_count = (min_programs_count, max_programs_count)
+
+    universities = universities_controller.find_universities_by_filters(
+        name=name,
+        city=city,
+        has_dormitory=has_dormitory,
+        military_dept=military_dept,
+        rating=rating,
+        programs_count=programs_count,
+    )
     for uni in universities:
         uni["_id"] = str(uni["_id"])
     return universities
@@ -85,13 +132,20 @@ async def create_university(
         has_dormitory=university.has_dormitory,
         military_dept=university.military_dept,
         website=university.website,
-        comment=university.comment
+        foundation_year=university.foundation_year,
+        students_count=university.students_count,
+        faculties_count=university.faculties_count,
+        phone=university.phone,
+        email=university.email,
+        comment=university.comment,
+        rating=university.rating,
+        programs_count=university.programs_count
     )
 
     if not university_id:
         raise HTTPException(status_code=500, detail="Не удалось создать университет")
 
-    return {"id": university_id, "message": "Университет успешно создан"}
+    return {"id": str(university_id), "message": "Университет успешно создан"}
 
 
 @router.put("/{university_id}")
@@ -117,6 +171,13 @@ async def update_university(
         has_dormitory=university.has_dormitory,
         military_dept=university.military_dept,
         website=university.website,
+        foundation_year=university.foundation_year,
+        students_count=university.students_count,
+        faculties_count=university.faculties_count,
+        phone=university.phone,
+        email=university.email,
+        rating=university.rating,
+        programs_count=university.programs_count,
         comment=university.comment
     )
 

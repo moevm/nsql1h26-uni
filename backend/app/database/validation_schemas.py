@@ -63,7 +63,8 @@ validation_universities_schema = {
             },
             "phone": {
                 "bsonType": "string",
-                "maxLength": 30
+                "maxLength": 30,
+                "pattern": "^\\+?[0-9()\\-\\s]{7,20}$"
             },
             "email": {
                 "bsonType": "string",
@@ -71,7 +72,8 @@ validation_universities_schema = {
             },
             "rating": {
                 "bsonType": "double",
-                "minimum": 0
+                "minimum": 0,
+                "maximum": 5
             },
             "programs_count": {
                 "bsonType": "int",
