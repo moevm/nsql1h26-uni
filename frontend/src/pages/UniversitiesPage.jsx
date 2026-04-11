@@ -23,11 +23,15 @@ const UniversitiesPage = () => {
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
   const [isRatingDropdownOpen, setIsRatingDropdownOpen] = useState(false);
   const [isProgramsDropdownOpen, setIsProgramsDropdownOpen] = useState(false);
+  const [isDormitoryDropdownOpen, setIsDormitoryDropdownOpen] = useState(false);
+  const [isMilitaryDeptDropdownOpen, setIsMilitaryDeptDropdownOpen] = useState(false);
   const [sortBy, setSortBy] = useState('rating_desc');
   const [appliedFiltersSignature, setAppliedFiltersSignature] = useState(getFiltersSignature({}));
 
   const ratingDropdownRef = useRef(null);
   const programsDropdownRef = useRef(null);
+  const dormitoryDropdownRef = useRef(null);
+  const militaryDeptDropdownRef = useRef(null);
 
   const ratingValidationError = useMemo(() => {
     const minValue = minRating === '' ? null : Number(minRating);
@@ -178,6 +182,14 @@ const UniversitiesPage = () => {
       if (programsDropdownRef.current && !programsDropdownRef.current.contains(event.target)) {
         setIsProgramsDropdownOpen(false);
       }
+
+      if (dormitoryDropdownRef.current && !dormitoryDropdownRef.current.contains(event.target)) {
+        setIsDormitoryDropdownOpen(false);
+      }
+
+      if (militaryDeptDropdownRef.current && !militaryDeptDropdownRef.current.contains(event.target)) {
+        setIsMilitaryDeptDropdownOpen(false);
+      }
     };
 
     document.addEventListener('mousedown', handleOutsideClick);
@@ -202,6 +214,8 @@ const UniversitiesPage = () => {
     setIsCityDropdownOpen(false);
     setIsRatingDropdownOpen(false);
     setIsProgramsDropdownOpen(false);
+    setIsDormitoryDropdownOpen(false);
+    setIsMilitaryDeptDropdownOpen(false);
     setSortBy('rating_desc');
     setCurrentPage(1);
     fetchUniversities({});
@@ -292,29 +306,117 @@ const UniversitiesPage = () => {
               </div>
             </div>
             
-            <select
-              className={styles.filterSelect}
-              value={dormitory}
-              onChange={(e) => {
-                setDormitory(e.target.value);
-              }}
-            >
-              <option value="">🏠 Общежитие: не важно</option>
-              <option value="yes">🏠 Общежитие: Есть</option>
-              <option value="no">🏠 Общежитие: Нет</option>
-            </select>
+            <div className={styles.dormitoryDropdown} ref={dormitoryDropdownRef}>
+              <button
+                type="button"
+                className={styles.dormitoryDropdownTrigger}
+                onClick={() => setIsDormitoryDropdownOpen((currentState) => !currentState)}
+              >
+                <span>
+                  {dormitory === 'yes'
+                    ? '🏠 Общежитие: Есть'
+                    : dormitory === 'no'
+                    ? '🏠 Общежитие: Нет'
+                    : '🏠 Общежитие: не важно'}
+                </span>
+                <span className={styles.dormitoryDropdownChevron}>
+                  {isDormitoryDropdownOpen ? '▲' : '▼'}
+                </span>
+              </button>
+
+              {isDormitoryDropdownOpen && (
+                <div className={styles.dormitoryDropdownPanel}>
+                  <div className={styles.optionsGroup}>
+                    <button
+                      type="button"
+                      className={`${styles.optionButton} ${dormitory === '' ? styles.optionButtonActive : ''}`}
+                      onClick={() => {
+                        setDormitory('');
+                        setIsDormitoryDropdownOpen(false);
+                      }}
+                    >
+                      не важно
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.optionButton} ${dormitory === 'yes' ? styles.optionButtonActive : ''}`}
+                      onClick={() => {
+                        setDormitory('yes');
+                        setIsDormitoryDropdownOpen(false);
+                      }}
+                    >
+                      есть
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.optionButton} ${dormitory === 'no' ? styles.optionButtonActive : ''}`}
+                      onClick={() => {
+                        setDormitory('no');
+                        setIsDormitoryDropdownOpen(false);
+                      }}
+                    >
+                      нет
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             
-            <select
-              className={styles.filterSelect}
-              value={militaryDept}
-              onChange={(e) => {
-                setMilitaryDept(e.target.value);
-              }}
-            >
-              <option value="">⚔️ Военная кафедра: не важно</option>
-              <option value="yes">⚔️ Военная кафедра: Есть</option>
-              <option value="no">⚔️ Военная кафедра: Нет</option>
-            </select>
+            <div className={styles.militaryDeptDropdown} ref={militaryDeptDropdownRef}>
+              <button
+                type="button"
+                className={styles.militaryDeptDropdownTrigger}
+                onClick={() => setIsMilitaryDeptDropdownOpen((currentState) => !currentState)}
+              >
+                <span>
+                  {militaryDept === 'yes'
+                    ? '⚔️ Военная кафедра: Есть'
+                    : militaryDept === 'no'
+                    ? '⚔️ Военная кафедра: Нет'
+                    : '⚔️ Военная кафедра: не важно'}
+                </span>
+                <span className={styles.militaryDeptDropdownChevron}>
+                  {isMilitaryDeptDropdownOpen ? '▲' : '▼'}
+                </span>
+              </button>
+
+              {isMilitaryDeptDropdownOpen && (
+                <div className={styles.militaryDeptDropdownPanel}>
+                  <div className={styles.optionsGroup}>
+                    <button
+                      type="button"
+                      className={`${styles.optionButton} ${militaryDept === '' ? styles.optionButtonActive : ''}`}
+                      onClick={() => {
+                        setMilitaryDept('');
+                        setIsMilitaryDeptDropdownOpen(false);
+                      }}
+                    >
+                      не важно
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.optionButton} ${militaryDept === 'yes' ? styles.optionButtonActive : ''}`}
+                      onClick={() => {
+                        setMilitaryDept('yes');
+                        setIsMilitaryDeptDropdownOpen(false);
+                      }}
+                    >
+                      есть
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.optionButton} ${militaryDept === 'no' ? styles.optionButtonActive : ''}`}
+                      onClick={() => {
+                        setMilitaryDept('no');
+                        setIsMilitaryDeptDropdownOpen(false);
+                      }}
+                    >
+                      нет
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             
             <button onClick={handleReset} className={styles.resetBtn}>
               Сбросить
