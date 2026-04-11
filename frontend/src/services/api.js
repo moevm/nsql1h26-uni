@@ -1,12 +1,14 @@
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
 
 async function request(path, options = {}) {
+  const mergedHeaders = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {}),
+  };
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-    },
     ...options,
+    headers: mergedHeaders,
   });
 
   const contentType = response.headers.get('content-type') || '';
@@ -32,6 +34,16 @@ export async function getUniversities() {
 
 export async function getUniversity(id) {
   return request(`/universities/${id}`);
+}
+
+export async function createUniversity(payload, adminId) {
+  return request('/universities/', {
+    method: 'POST',
+    headers: {
+      'x-user-id': adminId,
+    },
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function getProgramsByUniversity(universityId, filters = {}) {

@@ -108,6 +108,16 @@
   background: #162d48;
 }
 
+.btnSecondary {
+  background: white;
+  border: 1px solid #cbd5e1;
+  color: #1e3c5c;
+}
+
+.btnSecondary:hover {
+  background: #f8fafc;
+}
+
 .btnDanger {
   background: #991b1b;
   border: 1px solid #991b1b;
@@ -273,4 +283,141 @@
 
 .dots {
   color: #cbd5e1;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 37, 59, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.modal {
+  width: min(640px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+  padding: 20px;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.modalHeader h4 {
+  margin: 0;
+  color: #0b253b;
+  font-size: 1.15rem;
+}
+
+.closeBtn {
+  border: 1px solid #d0dbe8;
+  background: white;
+  color: #1e3c5c;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.closeBtn:hover {
+  background: #f8fafc;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.requiredHint {
+  color: #64748b;
+  font-size: 0.85rem;
+  background: #f8fafc;
+  border: 1px solid #e2eaf2;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #1e3c5c;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.formField input,
+.formField textarea {
+  border: 1px solid #d0dbe8;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  font-weight: 400;
+}
+
+.formField textarea {
+  resize: vertical;
+}
+
+.checkboxRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.checkboxField {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #1e3c5c;
+  font-size: 0.9rem;
+}
+
+.formError {
+  color: #991b1b;
+  background: #fee2e2;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+}
+
+.modalActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+@media (max-width: 640px) {
+  .modal {
+    padding: 16px;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .modalActions {
+    grid-template-columns: 1fr;
+  }
 }
