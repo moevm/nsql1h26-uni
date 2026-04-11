@@ -592,7 +592,7 @@ const UniversityDetailPage = () => {
           <div className={styles.programsHeader}>
             <h3>Направления подготовки</h3>
             <div className={styles.programsCount}>
-              Всего: {universityPrograms.length} направлений
+              Всего направлений: {universityPrograms.length}
             </div>
           </div>
 
