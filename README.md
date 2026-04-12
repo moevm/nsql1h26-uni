@@ -27,7 +27,8 @@ docker compose build --no-cache && docker compose up
 После запуска приложение будет доступно по адресам:
 
 - Frontend: `http://localhost:3000`
-- Backend (FastAPI): `http://localhost:8080/docs`
+- Backend (FastAPI): `http://localhost:8080`
+- Интерактивная документация API: `http://localhost:8080/docs`
 - MongoDB: `mongodb://db:27017`
 
 **Учётные данные для входа в админ-панель (установлены автоматически):**
