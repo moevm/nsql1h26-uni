@@ -41,7 +41,6 @@ docker compose build --no-cache && docker compose up
 docker compose down
 ```
 
-
 Для удаления данных БД при остановке:
 ```bash
 docker compose down -v
