@@ -188,68 +188,291 @@ def seed_default_programs(db):
         print("No programs collection available for seeding")
         return
 
+    if not universities_controller:
+        print("No universities collection available for program seeding")
+        return
+
+    university_names = [
+        "МГУ им. Ломоносова",
+        "МФТИ (Физтех)",
+        "НИУ ВШЭ",
+        "МГТУ им. Баумана",
+        "СПбГУ",
+        "НГУ",
+    ]
+
+    university_ids = {}
+    for university_name in university_names:
+        university = universities_controller.find_university_by_name(university_name)
+        if not university:
+            print(f"University '{university_name}' not found, related programs will be skipped")
+            continue
+        university_ids[university_name] = str(university["_id"])
+
     default_programs = [
         {
-            "university_id": str(universities_controller.find_university_by_name("мфти (физтех)")["_id"]),
+            "university_name": "МГУ им. Ломоносова",
             "code": "01.03.02",
             "name": "Прикладная математика и информатика",
-            "budget_places": 25,
-            "paid_places": 15,
-            "passing_score": 290,
+            "budget_places": 90,
+            "paid_places": 30,
+            "passing_score": 292,
             "form_of_education": "Очная",
             "required_subjects": {
-                "Математика": 70,
-                "Информатика": 75,
-                "Русский язык": 80
+                "Математика": 75,
+                "Информатика": 80,
+                "Русский язык": 75
             }
         },
         {
-            "university_id": str(universities_controller.find_university_by_name("СПбГУ")["_id"]),
-            "code": "01.03.02",
-            "name": "Прикладная математика и информатика",
-            "budget_places": 5,
-            "paid_places": 65,
-            "passing_score": 270,
+            "university_name": "МГУ им. Ломоносова",
+            "code": "38.03.01",
+            "name": "Экономика",
+            "budget_places": 60,
+            "paid_places": 50,
+            "passing_score": 286,
             "form_of_education": "Очная",
             "required_subjects": {
-                "Математика": 60,
-                "Информатика": 65,
+                "Математика": 70,
+                "Обществознание": 75,
                 "Русский язык": 70
             }
         },
         {
-            "university_id": str(universities_controller.find_university_by_name("МФТИ (физтех)")["_id"]),
-            "code": "09.03.04",
-            "name": "Программная инженерия",
-            "budget_places": 15,
+            "university_name": "МГУ им. Ломоносова",
+            "code": "42.03.02",
+            "name": "Журналистика",
+            "budget_places": 45,
             "paid_places": 35,
-            "passing_score": 288,
+            "passing_score": 280,
             "form_of_education": "Очная",
             "required_subjects": {
-                "Математика": 70,
-                "Информатика": 65,
-                "Русский язык": 60
+                "Литература": 75,
+                "Русский язык": 80,
+                "История": 65
             }
         },
         {
-            "university_id": str(universities_controller.find_university_by_name("спбгу")["_id"]),
-            "code": "03.03.04",
-            "name": "Автоматизация тестирования",
-            "budget_places": 16,
-            "paid_places": 77,
-            "passing_score": 110,
+            "university_name": "МФТИ (Физтех)",
+            "code": "03.03.01",
+            "name": "Прикладная математика и физика",
+            "budget_places": 110,
+            "paid_places": 25,
+            "passing_score": 298,
             "form_of_education": "Очная",
             "required_subjects": {
-                "Математика": 75,
-                "Обществознание": 55
+                "Математика": 80,
+                "Физика": 78,
+                "Русский язык": 70
+            }
+        },
+        {
+            "university_name": "МФТИ (Физтех)",
+            "code": "09.03.04",
+            "name": "Программная инженерия",
+            "budget_places": 80,
+            "paid_places": 40,
+            "passing_score": 294,
+            "form_of_education": "Очная",
+            "required_subjects": {
+                "Математика": 78,
+                "Информатика": 80,
+                "Русский язык": 70
+            }
+        },
+        {
+            "university_name": "МФТИ (Физтех)",
+            "code": "11.03.02",
+            "name": "Инфокоммуникационные технологии и системы связи",
+            "budget_places": 70,
+            "paid_places": 20,
+            "passing_score": 285,
+            "form_of_education": "Очная",
+            "required_subjects": {
+                "Математика": 72,
+                "Физика": 72,
+                "Русский язык": 68
+            }
+        },
+        {
+            "university_name": "НИУ ВШЭ",
+            "code": "38.03.01",
+            "name": "Экономика",
+            "budget_places": 95,
+            "paid_places": 85,
+            "passing_score": 289,
+            "form_of_education": "Очная",
+            "required_subjects": {
+                "Математика": 72,
+                "Обществознание": 75,
+                "Русский язык": 70
+            }
+        },
+        {
+            "university_name": "НИУ ВШЭ",
+            "code": "09.03.03",
+            "name": "Прикладная информатика",
+            "budget_places": 60,
+            "paid_places": 70,
+            "passing_score": 283,
+            "form_of_education": "Очная",
+            "required_subjects": {
+                "Математика": 70,
+                "Информатика": 75,
+                "Русский язык": 68
+            }
+        },
+        {
+            "university_name": "НИУ ВШЭ",
+            "code": "40.03.01",
+            "name": "Юриспруденция",
+            "budget_places": 50,
+            "paid_places": 90,
+            "passing_score": 276,
+            "form_of_education": "Очная",
+            "required_subjects": {
+                "Обществознание": 75,
+                "История": 70,
+                "Русский язык": 72
+            }
+        },
+        {
+            "university_name": "МГТУ им. Баумана",
+            "code": "09.03.01",
+            "name": "Информатика и вычислительная техника",
+            "budget_places": 120,
+            "paid_places": 35,
+            "passing_score": 284,
+            "form_of_education": "Очная",
+            "required_subjects": {
+                "Математика": 74,
+                "Информатика": 72,
+                "Русский язык": 68
+            }
+        },
+        {
+            "university_name": "МГТУ им. Баумана",
+            "code": "15.03.04",
+            "name": "Автоматизация технологических процессов и производств",
+            "budget_places": 85,
+            "paid_places": 25,
+            "passing_score": 275,
+            "form_of_education": "Очная",
+            "required_subjects": {
+                "Математика": 70,
+                "Физика": 70,
+                "Русский язык": 66
+            }
+        },
+        {
+            "university_name": "МГТУ им. Баумана",
+            "code": "24.03.01",
+            "name": "Ракетные комплексы и космонавтика",
+            "budget_places": 75,
+            "paid_places": 20,
+            "passing_score": 282,
+            "form_of_education": "Очная",
+            "required_subjects": {
+                "Математика": 72,
+                "Физика": 74,
+                "Русский язык": 67
+            }
+        },
+        {
+            "university_name": "СПбГУ",
+            "code": "01.03.02",
+            "name": "Прикладная математика и информатика",
+            "budget_places": 70,
+            "paid_places": 60,
+            "passing_score": 279,
+            "form_of_education": "Очная",
+            "required_subjects": {
+                "Математика": 70,
+                "Информатика": 72,
+                "Русский язык": 68
+            }
+        },
+        {
+            "university_name": "СПбГУ",
+            "code": "45.03.02",
+            "name": "Лингвистика",
+            "budget_places": 65,
+            "paid_places": 55,
+            "passing_score": 274,
+            "form_of_education": "Очная",
+            "required_subjects": {
+                "Русский язык": 75,
+                "Английский язык": 78,
+                "История": 62
+            }
+        },
+        {
+            "university_name": "СПбГУ",
+            "code": "04.03.01",
+            "name": "Химия",
+            "budget_places": 55,
+            "paid_places": 30,
+            "passing_score": 270,
+            "form_of_education": "Очная",
+            "required_subjects": {
+                "Химия": 72,
+                "Математика": 65,
+                "Русский язык": 66
+            }
+        },
+        {
+            "university_name": "НГУ",
+            "code": "01.03.01",
+            "name": "Математика",
+            "budget_places": 80,
+            "paid_places": 25,
+            "passing_score": 276,
+            "form_of_education": "Очная",
+            "required_subjects": {
+                "Математика": 74,
+                "Информатика": 68,
+                "Русский язык": 66
+            }
+        },
+        {
+            "university_name": "НГУ",
+            "code": "06.03.01",
+            "name": "Биология",
+            "budget_places": 70,
+            "paid_places": 35,
+            "passing_score": 265,
+            "form_of_education": "Очная",
+            "required_subjects": {
+                "Биология": 72,
+                "Химия": 70,
+                "Русский язык": 65
+            }
+        },
+        {
+            "university_name": "НГУ",
+            "code": "09.03.04",
+            "name": "Программная инженерия",
+            "budget_places": 75,
+            "paid_places": 45,
+            "passing_score": 278,
+            "form_of_education": "Очная",
+            "required_subjects": {
+                "Математика": 72,
+                "Информатика": 73,
+                "Русский язык": 66
             }
         },
     ]
 
     count = 0
     for prog in default_programs:
+        university_id = university_ids.get(prog["university_name"])
+        if not university_id:
+            print(f"Program '{prog['name']}' skipped: university '{prog['university_name']}' is missing")
+            continue
+
         result = programs_controller.add_program(
-            university_id=prog["university_id"],
+            university_id=university_id,
             code=prog["code"],
             name=prog["name"],
             budget_places=prog["budget_places"],
