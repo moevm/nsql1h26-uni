@@ -30,7 +30,7 @@ docker compose build --no-cache && docker compose up
 - Backend (FastAPI): `http://localhost:8080/docs`
 - MongoDB: `mongodb://db:27017`
 
-**Учётные данные для входа (установлены автоматически):**
+**Учётные данные для входа в админ-панель (установлены автоматически):**
 - Логин: `admin`
 - Пароль: `admin123`
 
