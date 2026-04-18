@@ -6,7 +6,7 @@ from datetime import datetime
 from xml.etree import ElementTree as ET
 
 from bson import ObjectId
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile
 from fastapi.responses import Response
 
 from app.core.dependencies import get_db_connection
@@ -31,6 +31,101 @@ def serialize_mongo_value(value):
     return value
 
 
+def parse_iso_datetime(value):
+    if not isinstance(value, str):
+        return value
+
+    normalized = value.replace("Z", "+00:00")
+    try:
+        return datetime.fromisoformat(normalized)
+    except ValueError:
+        return value
+
+
+def normalize_admin_record(record: dict) -> dict:
+    required_fields = ("_id", "username", "password_hash", "createdAt")
+    missing_fields = [field for field in required_fields if field not in record or record[field] in (None, "")]
+    if missing_fields:
+        missing_list = ", ".join(missing_fields)
+        raise ValueError(f"admins[{record}]: отсутствуют обязательные поля: {missing_list}")
+
+    normalized = dict(record)
+    if "_id" in normalized and isinstance(normalized["_id"], str):
+        normalized["_id"] = ObjectId(normalized["_id"])
+    if "createdAt" in normalized:
+        normalized["createdAt"] = parse_iso_datetime(normalized["createdAt"])
+    return normalized
+
+
+def normalize_university_record(record: dict) -> dict:
+    required_fields = ("_id", "name", "city", "has_dormitory", "military_dept", "website")
+    missing_fields = [field for field in required_fields if field not in record or record[field] in (None, "")]
+    if missing_fields:
+        missing_list = ", ".join(missing_fields)
+        raise ValueError(f"universities[{record}]: отсутствуют обязательные поля: {missing_list}")
+
+    normalized = dict(record)
+    if "_id" in normalized and isinstance(normalized["_id"], str):
+        normalized["_id"] = ObjectId(normalized["_id"])
+
+    normalized["address"] = normalized.get("address") or ""
+    normalized["foundation_year"] = normalized.get("foundation_year") if normalized.get("foundation_year") is not None else 0
+    normalized["students_count"] = normalized.get("students_count") if normalized.get("students_count") is not None else 0
+    normalized["faculties_count"] = normalized.get("faculties_count") if normalized.get("faculties_count") is not None else 0
+    normalized["phone"] = normalized.get("phone") or ""
+    normalized["email"] = normalized.get("email") or ""
+    normalized["comment"] = normalized.get("comment") or ""
+    normalized["rating"] = normalized.get("rating") if normalized.get("rating") is not None else 4.5
+    normalized["programs_count"] = normalized.get("programs_count") if normalized.get("programs_count") is not None else 0
+
+    created_at_value = normalized.get("createdAt")
+    updated_at_value = normalized.get("updatedAt")
+    normalized["createdAt"] = parse_iso_datetime(created_at_value) if created_at_value is not None else datetime.now()
+    normalized["updatedAt"] = parse_iso_datetime(updated_at_value) if updated_at_value is not None else datetime.now()
+
+    return normalized
+
+
+def normalize_program_record(record: dict) -> dict:
+    required_fields = (
+        "_id",
+        "university_id",
+        "code",
+        "name",
+        "budget_places",
+        "paid_places",
+        "passing_score",
+        "form_of_education",
+        "required_subjects",
+    )
+    missing_fields = [field for field in required_fields if field not in record or record[field] in (None, "")]
+    if missing_fields:
+        missing_list = ", ".join(missing_fields)
+        raise ValueError(f"programs[{record}]: отсутствуют обязательные поля: {missing_list}")
+
+    normalized = dict(record)
+    if "_id" in normalized and isinstance(normalized["_id"], str):
+        normalized["_id"] = ObjectId(normalized["_id"])
+
+    if "university_id" in normalized and isinstance(normalized["university_id"], str):
+        normalized["university_id"] = ObjectId(normalized["university_id"])
+
+    if isinstance(normalized.get("required_subjects"), dict):
+        normalized["required_subjects"] = [
+            {"subject": subject, "minimum_points": minimum_points}
+            for subject, minimum_points in normalized["required_subjects"].items()
+        ]
+
+    normalized["comment"] = normalized.get("comment") or ""
+
+    created_at_value = normalized.get("createdAt")
+    updated_at_value = normalized.get("updatedAt")
+    normalized["createdAt"] = parse_iso_datetime(created_at_value) if created_at_value is not None else datetime.now()
+    normalized["updatedAt"] = parse_iso_datetime(updated_at_value) if updated_at_value is not None else datetime.now()
+
+    return normalized
+
+
 def get_all_collections_data(db: UniversitiesDataBase) -> tuple[list, list, list]:
     admins_controller = db.get_admins_collection()
     universities_controller = db.get_universities_collection()
@@ -43,6 +138,91 @@ def get_all_collections_data(db: UniversitiesDataBase) -> tuple[list, list, list
     universities = serialize_mongo_value(universities_controller.find_universities_by_filters())
     programs = serialize_mongo_value(programs_controller.find_programs_by_filters())
     return admins, universities, programs
+
+
+def import_snapshot_json(db: UniversitiesDataBase, payload: dict, current_admin: dict) -> dict:
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Некорректный JSON: ожидается объект")
+
+    required_sections = ("admins", "universities", "programs")
+    for section in required_sections:
+        if section not in payload:
+            raise HTTPException(status_code=400, detail=f"Некорректный JSON: отсутствует секция '{section}'")
+        if not isinstance(payload[section], list):
+            raise HTTPException(status_code=400, detail=f"Секция '{section}' должна быть массивом")
+
+    admins_controller = db.get_admins_collection()
+    universities_controller = db.get_universities_collection()
+    programs_controller = db.get_programs_collection()
+
+    if not admins_controller or not universities_controller or not programs_controller:
+        raise HTTPException(status_code=500, detail="База данных недоступна")
+
+    try:
+        admins_docs = [normalize_admin_record(item) for item in payload["admins"]]
+        universities_docs = [normalize_university_record(item) for item in payload["universities"]]
+        programs_docs = [normalize_program_record(item) for item in payload["programs"]]
+    except Exception as error:
+        raise HTTPException(status_code=400, detail=f"Некорректные данные в JSON: {error}")
+
+    university_ids = {item.get("_id") for item in universities_docs}
+    orphan_program_ids = [
+        str(program_doc.get("university_id"))
+        for program_doc in programs_docs
+        if program_doc.get("university_id") not in university_ids
+    ]
+    if orphan_program_ids:
+        orphan_values = ", ".join(sorted(set(orphan_program_ids)))
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Некорректные связи в JSON: найдены направления с university_id, "
+                f"которых нет в universities._id ({orphan_values})"
+            ),
+        )
+
+    preserved_admin = normalize_admin_record(current_admin)
+    current_admin_username = preserved_admin.get("username")
+    used_admin_ids = {preserved_admin.get("_id")}
+    normalized_admins_docs = []
+
+    for admin_doc in admins_docs:
+        if admin_doc.get("username") == current_admin_username:
+            continue
+
+        admin_id = admin_doc.get("_id")
+        if admin_id in used_admin_ids:
+            admin_doc["_id"] = ObjectId()
+            admin_id = admin_doc["_id"]
+
+        while admin_id in used_admin_ids:
+            admin_doc["_id"] = ObjectId()
+            admin_id = admin_doc["_id"]
+
+        used_admin_ids.add(admin_id)
+        normalized_admins_docs.append(admin_doc)
+
+    normalized_admins_docs.append(preserved_admin)
+
+    try:
+        programs_controller._collection.delete_many({})
+        universities_controller._collection.delete_many({})
+        admins_controller._collection.delete_many({})
+
+        if normalized_admins_docs:
+            admins_controller._collection.insert_many(normalized_admins_docs, ordered=True)
+        if universities_docs:
+            universities_controller._collection.insert_many(universities_docs, ordered=True)
+        if programs_docs:
+            programs_controller._collection.insert_many(programs_docs, ordered=True)
+
+        return {
+            "admins": len(normalized_admins_docs),
+            "universities": len(universities_docs),
+            "programs": len(programs_docs),
+        }
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"Не удалось импортировать данные: {error}")
 
 
 def build_csv_content(rows: list[dict]) -> str:
@@ -218,3 +398,25 @@ async def export_all_data_xml(
             "Content-Disposition": f'attachment; filename="{filename}"',
         },
     )
+
+
+@router.post("/import/json")
+async def import_all_data_json(
+    file: UploadFile = File(...),
+    admin: dict = Depends(get_current_admin),
+    db: UniversitiesDataBase = Depends(get_db_connection),
+):
+    if file.content_type not in ("application/json", "text/json", "application/octet-stream"):
+        raise HTTPException(status_code=400, detail="Поддерживается только JSON-файл")
+
+    try:
+        raw_bytes = await file.read()
+        payload = json.loads(raw_bytes.decode("utf-8"))
+    except Exception:
+        raise HTTPException(status_code=400, detail="Не удалось прочитать JSON-файл")
+
+    imported_counts = import_snapshot_json(db, payload, admin)
+    return {
+        "message": "Импорт успешно завершен",
+        "imported": imported_counts,
+    }

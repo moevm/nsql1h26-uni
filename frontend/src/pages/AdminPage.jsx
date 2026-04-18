@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from './AdminPage.module.css';
 import {
   createProgram,
@@ -8,6 +8,7 @@ import {
   exportAllDataCsv,
   exportAllDataJson,
   exportAllDataXml,
+  importAllDataJson,
   getProgram,
   getPrograms,
   getUniversity,
@@ -19,7 +20,6 @@ import { getAdminSession } from '../services/auth';
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
-const PHONE_REGEX = /^\+?[0-9()\-\s]{7,20}$/;
 const FORM_OF_EDUCATION_OPTIONS = ['Очная', 'Очно-заочная', 'Заочная'];
 const SUBJECT_OPTIONS = [
   'Русский язык',
@@ -85,7 +85,66 @@ const INITIAL_PROGRAM_FORM = {
   comment: '',
 };
 
+const buildImportJsonTemplate = () => ({
+  meta: {
+    format: 'json',
+    version: '1.0',
+    exported_at: '2026-04-18T10:15:00+00:00',
+  },
+  admins: [
+    {
+      _id: '67f100000000000000000001',
+      username: 'admin',
+      password_hash: '$2b$12$example.hash.value',
+      createdAt: '2026-04-18T10:15:00+00:00',
+    },
+  ],
+  universities: [
+    {
+      _id: '67f200000000000000000001',
+      name: 'МГУ',
+      city: 'Москва',
+      address: 'Ленинские горы, д. 1',
+      has_dormitory: true,
+      military_dept: true,
+      website: 'https://www.msu.ru',
+      foundation_year: 1755,
+      students_count: 40000,
+      faculties_count: 15,
+      phone: '+7 (495) 939-10-00',
+      email: 'priem@msu.ru',
+      comment: 'Пример записи для импорта',
+      rating: 4.8,
+      programs_count: 120,
+      createdAt: '2026-04-18T10:15:00+00:00',
+      updatedAt: '2026-04-18T10:15:00+00:00',
+    },
+  ],
+  programs: [
+    {
+      _id: '67f300000000000000000001',
+      university_id: '67f200000000000000000001',
+      code: '01.03.02',
+      name: 'Прикладная математика и информатика',
+      budget_places: 80,
+      paid_places: 20,
+      passing_score: 260,
+      form_of_education: 'Очная',
+      required_subjects: [
+        {
+          subject: 'Математика',
+          minimum_points: 70,
+        },
+      ],
+      comment: 'Пример записи для импорта',
+      createdAt: '2026-04-18T10:15:00+00:00',
+      updatedAt: '2026-04-18T10:15:00+00:00',
+    },
+  ],
+});
+
 const AdminPage = () => {
+  const importFileInputRef = useRef(null);
   const [universities, setUniversities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -108,6 +167,10 @@ const AdminPage = () => {
   const [activeSubjectDropdownIndex, setActiveSubjectDropdownIndex] = useState(null);
   const [programSubmitLoading, setProgramSubmitLoading] = useState(false);
   const [programSubmitError, setProgramSubmitError] = useState(null);
+  const [importFile, setImportFile] = useState(null);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importError, setImportError] = useState(null);
+  const [importSuccessMessage, setImportSuccessMessage] = useState(null);
   const [exportFormat, setExportFormat] = useState('json');
   const [exportLoading, setExportLoading] = useState(false);
   const [exportError, setExportError] = useState(null);
@@ -749,6 +812,71 @@ const AdminPage = () => {
     }
   };
 
+  const handleImportFileChange = (event) => {
+    const file = event.target.files?.[0] || null;
+    setImportFile(file);
+    setImportError(null);
+    setImportSuccessMessage(null);
+  };
+
+  const handleImportFileClick = () => {
+    importFileInputRef.current?.click();
+  };
+
+  const handleImportAllDataJson = async () => {
+    const adminSession = getAdminSession();
+    if (!adminSession?.adminId) {
+      setImportError('Сессия администратора не найдена. Войдите снова.');
+      setImportSuccessMessage(null);
+      return;
+    }
+
+    if (!importFile) {
+      setImportError('Выберите JSON-файл для импорта.');
+      setImportSuccessMessage(null);
+      return;
+    }
+
+    try {
+      setImportLoading(true);
+      setImportError(null);
+      setImportSuccessMessage(null);
+
+      const result = await importAllDataJson(importFile, adminSession.adminId);
+
+      await fetchUniversities();
+      await fetchPrograms();
+      setCurrentPage(1);
+      setCurrentProgramPage(1);
+
+      const imported = result?.imported || {};
+      setImportSuccessMessage(
+        `Импорт завершен: админы ${imported.admins ?? 0}, вузы ${imported.universities ?? 0}, направления ${imported.programs ?? 0}`
+      );
+      setImportFile(null);
+    } catch (requestError) {
+      setImportError(requestError.message || 'Не удалось импортировать данные');
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const handleDownloadImportTemplate = () => {
+    const template = buildImportJsonTemplate();
+    const content = JSON.stringify(template, null, 2);
+    const blob = new Blob([content], { type: 'application/json' });
+    const downloadUrl = window.URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = 'nsql-import-template.json';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.URL.revokeObjectURL(downloadUrl);
+  };
+
   return (
     <div className={styles.container}>
         <div className={styles.screenTitle}>⚙️ Администрирование</div>
@@ -758,14 +886,144 @@ const AdminPage = () => {
           <div className={styles.importExportGrid}>
             <div className={styles.importBox}>
               <div className={styles.boxTitle}>Импорт</div>
-              <div className={styles.fileInput}>
-                📁 Перетащите файл или нажмите для выбора<br />
-                <span style={{ fontSize: '0.85rem' }}>Поддерживаются файлы .json</span>
-              </div>
+              {importFile ? (
+                <button
+                  type="button"
+                  className={styles.selectedFileName}
+                  onClick={handleImportFileClick}
+                  disabled={importLoading}
+                  title="Нажмите, чтобы выбрать другой файл"
+                >
+                  {importFile.name}
+                </button>
+              ) : (
+                <label className={styles.fileInput} htmlFor="admin-import-file-input">
+                  📁 Нажмите для выбора JSON-файла<br />
+                  <span style={{ fontSize: '0.85rem' }}>
+                    Поддерживаются файлы .json
+                  </span>
+                </label>
+              )}
+              <input
+                ref={importFileInputRef}
+                id="admin-import-file-input"
+                type="file"
+                accept="application/json,.json"
+                onChange={handleImportFileChange}
+                className={styles.hiddenFileInput}
+                disabled={importLoading}
+              />
               <div className={styles.warning}>
                 ⚠️ Все текущие данные будут заменены
               </div>
-              <button className={`${styles.btn} ${styles.btnDanger}`}>Загрузить и заменить данные</button>
+              <details className={styles.adminImportHint}>
+                <summary>Особенности импорта администратора</summary>
+                <p>Импорт не удаляет администратора, под которым вы вошли в систему: эта учетная запись всегда сохраняется.</p>
+                <ul className={styles.importHintList}>
+                  <li>
+                    Для администраторов нужен хэш пароля в поле <code>password_hash</code>; обычный пароль импортировать нельзя.
+                  </li>
+                  <li>
+                    Если в файле есть администратор с тем же <code>username</code>, что и текущий, он не будет продублирован.
+                  </li>
+                  <li>
+                    Если у администраторов совпадет <code>_id</code>, система назначит новый id, чтобы запись не потерялась.
+                  </li>
+                </ul>
+              </details>
+              <details className={styles.importHint}>
+                <summary>Требования к JSON-файлу</summary>
+                <p>Файл должен быть JSON-объектом с секциями: <b>admins</b>, <b>universities</b>, <b>programs</b>.</p>
+                <p>Обязательные поля в элементах массивов:</p>
+                <ul className={styles.importHintList}>
+                  <li>
+                    <b>admins[]:</b> <code>_id</code>, <code>username</code>, <code>password_hash</code>, <code>createdAt</code>
+                  </li>
+                  <li>
+                    <b>universities[]:</b> <code>_id</code>, <code>name</code>, <code>city</code>, <code>has_dormitory</code>, <code>military_dept</code>, <code>website</code>
+                  </li>
+                  <li>
+                    <b>programs[]:</b> <code>_id</code>, <code>university_id</code>, <code>code</code>, <code>name</code>, <code>budget_places</code>, <code>paid_places</code>, <code>passing_score</code>, <code>form_of_education</code>, <code>required_subjects</code>
+                  </li>
+                </ul>
+                <p>
+                  Для сохранения связей все значения <code>programs[].university_id</code> должны существовать среди <code>universities[]._id</code>.
+                </p>
+                <p>
+                  Если необязательные поля отсутствуют, они будут автоматически инициализированы значениями по умолчанию и их можно отредактировать позже.
+                </p>
+                <pre className={styles.importHintCode}>{`{
+  "meta": { "format": "json", "version": "1.0" },
+  "admins": [
+    {
+      "_id": "67f1...",
+      "username": "admin",
+      "password_hash": "...",
+      "createdAt": "2026-04-18T10:15:00+00:00"
+    }
+  ],
+  "universities": [
+    {
+      "_id": "67f2...",
+      "name": "МГУ",
+      "city": "Москва",
+      "address": "...",
+      "has_dormitory": true,
+      "military_dept": true,
+      "website": "https://...",
+      "foundation_year": 1755,
+      "students_count": 40000,
+      "faculties_count": 15,
+      "phone": "+7 ...",
+      "email": "...",
+      "comment": "",
+      "rating": 4.8,
+      "programs_count": 120,
+      "createdAt": "2026-04-18T10:15:00+00:00",
+      "updatedAt": "2026-04-18T10:15:00+00:00"
+    }
+  ],
+  "programs": [
+    {
+      "_id": "67f3...",
+      "university_id": "67f2...",
+      "code": "01.03.02",
+      "name": "Прикладная математика и информатика",
+      "budget_places": 80,
+      "paid_places": 20,
+      "passing_score": 260,
+      "form_of_education": "Очная",
+      "required_subjects": [
+        { "subject": "Математика", "minimum_points": 70 }
+      ],
+      "comment": "",
+      "createdAt": "2026-04-18T10:15:00+00:00",
+      "updatedAt": "2026-04-18T10:15:00+00:00"
+    }
+  ]
+}`}</pre>
+                <p>Рекомендуется импортировать JSON, ранее скачанный через Экспорт.</p>
+                <div className={styles.importHintActions}>
+                  <button
+                    type="button"
+                    className={`${styles.btn} ${styles.btnSecondary}`}
+                    onClick={handleDownloadImportTemplate}
+                  >
+                    Скачать шаблон JSON
+                  </button>
+                </div>
+              </details>
+              <button
+                className={`${styles.btn} ${styles.btnDanger}`}
+                onClick={handleImportAllDataJson}
+                disabled={importLoading}
+              >
+                {importLoading ? 'Импорт...' : 'Загрузить и заменить данные'}
+              </button>
+              {importError && <div className={styles.formError}>❌ {importError}</div>}
+              {importSuccessMessage && (
+                <div className={styles.requiredHint}>✅ {importSuccessMessage}</div>
+              )}
             </div>
 
             <div className={styles.exportBox}>
@@ -1411,7 +1669,6 @@ const AdminPage = () => {
                       value={universityForm.phone}
                       onChange={(e) => handleFormChange('phone', e.target.value)}
                       placeholder="+7 (495) 123-45-67"
-                      pattern="^\\+?[0-9()\-\s]{7,20}$"
                       title="Введите телефон в формате +7 (495) 123-45-67"
                       disabled={submitLoading}
                     />
