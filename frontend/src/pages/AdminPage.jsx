@@ -6,7 +6,9 @@ import {
   deleteProgram,
   deleteUniversity,
   getPrograms,
+  getUniversity,
   getUniversities,
+  updateUniversity,
 } from '../services/api';
 import { getAdminSession } from '../services/auth';
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
@@ -84,6 +86,7 @@ const AdminPage = () => {
   const [programSearchQuery, setProgramSearchQuery] = useState('');
   const [currentProgramPage, setCurrentProgramPage] = useState(1);
   const [isAddUniversityOpen, setIsAddUniversityOpen] = useState(false);
+  const [editingUniversityId, setEditingUniversityId] = useState(null);
   const [universityForm, setUniversityForm] = useState(INITIAL_UNIVERSITY_FORM);
   const [isAddProgramOpen, setIsAddProgramOpen] = useState(false);
   const [programForm, setProgramForm] = useState(INITIAL_PROGRAM_FORM);
@@ -182,9 +185,52 @@ const AdminPage = () => {
   const programStartIndex = (currentProgramPage - 1) * programItemsPerPage;
   const paginatedPrograms = filteredPrograms.slice(programStartIndex, programStartIndex + programItemsPerPage);
 
-  const handleEditUniversity = (id) => {
-    console.log('Редактирование вуза:', id);
-    // TODO: Реализовать редактирование
+  const handleEditUniversity = async (id) => {
+    try {
+      setSubmitLoading(true);
+      setSubmitError(null);
+
+      const university = await getUniversity(id);
+
+      setUniversityForm({
+        name: university.name || '',
+        city: university.city || '',
+        address: university.address || '',
+        website: university.website || '',
+        foundation_year:
+          university.foundation_year === null || university.foundation_year === undefined
+            ? ''
+            : String(university.foundation_year),
+        students_count:
+          university.students_count === null || university.students_count === undefined
+            ? ''
+            : String(university.students_count),
+        faculties_count:
+          university.faculties_count === null || university.faculties_count === undefined
+            ? ''
+            : String(university.faculties_count),
+        phone: university.phone || '',
+        email: university.email || '',
+        has_dormitory: Boolean(university.has_dormitory),
+        military_dept: Boolean(university.military_dept),
+        rating:
+          university.rating === null || university.rating === undefined
+            ? ''
+            : String(university.rating),
+        programs_count:
+          university.programs_count === null || university.programs_count === undefined
+            ? ''
+            : String(university.programs_count),
+        comment: university.comment || '',
+      });
+
+      setEditingUniversityId(id);
+      setIsAddUniversityOpen(true);
+    } catch (requestError) {
+      setError(requestError.message || 'Не удалось загрузить данные университета');
+    } finally {
+      setSubmitLoading(false);
+    }
   };
 
   const handleDeleteUniversity = (id) => {
@@ -298,6 +344,7 @@ const AdminPage = () => {
 
   const handleOpenAddUniversity = () => {
     setSubmitError(null);
+    setEditingUniversityId(null);
     setUniversityForm(INITIAL_UNIVERSITY_FORM);
     setIsAddUniversityOpen(true);
   };
@@ -305,6 +352,7 @@ const AdminPage = () => {
   const handleCloseAddUniversity = () => {
     setIsAddUniversityOpen(false);
     setSubmitError(null);
+    setEditingUniversityId(null);
     setUniversityForm(INITIAL_UNIVERSITY_FORM);
   };
 
@@ -496,7 +544,7 @@ const AdminPage = () => {
     }
   };
 
-  const handleCreateUniversity = async (event) => {
+  const handleSubmitUniversity = async (event) => {
     event.preventDefault();
     setSubmitError(null);
 
@@ -543,31 +591,39 @@ const AdminPage = () => {
         return Number.isNaN(parsed) ? null : parsed;
       };
 
-      await createUniversity(
-        {
-          name: universityForm.name.trim(),
-          city: universityForm.city.trim(),
-          address: universityForm.address.trim() || null,
-          website: universityForm.website.trim(),
-          foundation_year: parseOptionalInt(universityForm.foundation_year),
-          students_count: parseOptionalInt(universityForm.students_count),
-          faculties_count: parseOptionalInt(universityForm.faculties_count),
-          phone: universityForm.phone.trim() || null,
-          email: universityForm.email.trim() || null,
-          has_dormitory: universityForm.has_dormitory,
-          military_dept: universityForm.military_dept,
-          rating: parseOptionalFloat(universityForm.rating),
-          programs_count: parseOptionalInt(universityForm.programs_count),
-          comment: universityForm.comment.trim() || null,
-        },
-        adminSession.adminId
-      );
+      const payload = {
+        name: universityForm.name.trim(),
+        city: universityForm.city.trim(),
+        address: universityForm.address.trim() || null,
+        website: universityForm.website.trim(),
+        foundation_year: parseOptionalInt(universityForm.foundation_year),
+        students_count: parseOptionalInt(universityForm.students_count),
+        faculties_count: parseOptionalInt(universityForm.faculties_count),
+        phone: universityForm.phone.trim() || null,
+        email: universityForm.email.trim() || null,
+        has_dormitory: universityForm.has_dormitory,
+        military_dept: universityForm.military_dept,
+        rating: parseOptionalFloat(universityForm.rating),
+        programs_count: parseOptionalInt(universityForm.programs_count),
+        comment: universityForm.comment.trim() || null,
+      };
+
+      if (editingUniversityId) {
+        await updateUniversity(editingUniversityId, payload, adminSession.adminId);
+      } else {
+        await createUniversity(payload, adminSession.adminId);
+      }
 
       handleCloseAddUniversity();
       await fetchUniversities();
-      setCurrentPage(1);
+      if (!editingUniversityId) {
+        setCurrentPage(1);
+      }
     } catch (requestError) {
-      setSubmitError(requestError.message || 'Не удалось создать университет');
+      setSubmitError(
+        requestError.message
+          || (editingUniversityId ? 'Не удалось обновить университет' : 'Не удалось создать университет')
+      );
     } finally {
       setSubmitLoading(false);
     }
@@ -1090,7 +1146,7 @@ const AdminPage = () => {
           <div className={styles.modalOverlay} onClick={handleCloseAddUniversity}>
             <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
               <div className={styles.modalHeader}>
-                <h4>Добавить вуз</h4>
+                <h4>{editingUniversityId ? 'Редактировать вуз' : 'Добавить вуз'}</h4>
                 <button
                   type="button"
                   className={styles.closeBtn}
@@ -1101,7 +1157,7 @@ const AdminPage = () => {
                 </button>
               </div>
 
-              <form className={styles.modalForm} onSubmit={handleCreateUniversity}>
+              <form className={styles.modalForm} onSubmit={handleSubmitUniversity}>
                 <div className={styles.requiredHint}>Поля со * обязательны для заполнения</div>
 
                 <label className={styles.formField}>
@@ -1288,7 +1344,9 @@ const AdminPage = () => {
                     Отмена
                   </button>
                   <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={submitLoading}>
-                    {submitLoading ? 'Создание...' : 'Создать вуз'}
+                    {submitLoading
+                      ? (editingUniversityId ? 'Сохранение...' : 'Создание...')
+                      : (editingUniversityId ? 'Сохранить изменения' : 'Создать вуз')}
                   </button>
                 </div>
               </form>

@@ -92,6 +92,16 @@ export async function deleteUniversity(universityId, adminId) {
   });
 }
 
+export async function updateUniversity(universityId, payload, adminId) {
+  return request(`/universities/${universityId}`, {
+    method: 'PUT',
+    headers: {
+      'x-user-id': adminId,
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function createProgram(payload, adminId) {
   return request('/programs/', {
     method: 'POST',
