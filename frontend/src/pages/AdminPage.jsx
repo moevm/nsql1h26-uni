@@ -5,8 +5,12 @@ import {
   createUniversity,
   deleteProgram,
   deleteUniversity,
+  getProgram,
   getPrograms,
+  getUniversity,
   getUniversities,
+  updateProgram,
+  updateUniversity,
 } from '../services/api';
 import { getAdminSession } from '../services/auth';
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
@@ -84,8 +88,10 @@ const AdminPage = () => {
   const [programSearchQuery, setProgramSearchQuery] = useState('');
   const [currentProgramPage, setCurrentProgramPage] = useState(1);
   const [isAddUniversityOpen, setIsAddUniversityOpen] = useState(false);
+  const [editingUniversityId, setEditingUniversityId] = useState(null);
   const [universityForm, setUniversityForm] = useState(INITIAL_UNIVERSITY_FORM);
   const [isAddProgramOpen, setIsAddProgramOpen] = useState(false);
+  const [editingProgramId, setEditingProgramId] = useState(null);
   const [programForm, setProgramForm] = useState(INITIAL_PROGRAM_FORM);
   const [programUniversitySearch, setProgramUniversitySearch] = useState('');
   const [isProgramUniversityDropdownOpen, setIsProgramUniversityDropdownOpen] = useState(false);
@@ -182,9 +188,52 @@ const AdminPage = () => {
   const programStartIndex = (currentProgramPage - 1) * programItemsPerPage;
   const paginatedPrograms = filteredPrograms.slice(programStartIndex, programStartIndex + programItemsPerPage);
 
-  const handleEditUniversity = (id) => {
-    console.log('Редактирование вуза:', id);
-    // TODO: Реализовать редактирование
+  const handleEditUniversity = async (id) => {
+    try {
+      setSubmitLoading(true);
+      setSubmitError(null);
+
+      const university = await getUniversity(id);
+
+      setUniversityForm({
+        name: university.name || '',
+        city: university.city || '',
+        address: university.address || '',
+        website: university.website || '',
+        foundation_year:
+          university.foundation_year === null || university.foundation_year === undefined
+            ? ''
+            : String(university.foundation_year),
+        students_count:
+          university.students_count === null || university.students_count === undefined
+            ? ''
+            : String(university.students_count),
+        faculties_count:
+          university.faculties_count === null || university.faculties_count === undefined
+            ? ''
+            : String(university.faculties_count),
+        phone: university.phone || '',
+        email: university.email || '',
+        has_dormitory: Boolean(university.has_dormitory),
+        military_dept: Boolean(university.military_dept),
+        rating:
+          university.rating === null || university.rating === undefined
+            ? ''
+            : String(university.rating),
+        programs_count:
+          university.programs_count === null || university.programs_count === undefined
+            ? ''
+            : String(university.programs_count),
+        comment: university.comment || '',
+      });
+
+      setEditingUniversityId(id);
+      setIsAddUniversityOpen(true);
+    } catch (requestError) {
+      setError(requestError.message || 'Не удалось загрузить данные университета');
+    } finally {
+      setSubmitLoading(false);
+    }
   };
 
   const handleDeleteUniversity = (id) => {
@@ -242,9 +291,64 @@ const AdminPage = () => {
     }
   };
 
-  const handleEditProgram = (id) => {
-    console.log('Редактирование направления:', id);
-    // TODO: Реализовать редактирование
+  const handleEditProgram = async (id) => {
+    try {
+      setProgramSubmitLoading(true);
+      setProgramSubmitError(null);
+
+      const program = await getProgram(id);
+
+      const requiredSubjects = Array.isArray(program.required_subjects)
+        ? program.required_subjects.map((item) => ({
+            subject: item.subject || '',
+            minimum_points:
+              item.minimum_points === null || item.minimum_points === undefined
+                ? ''
+                : String(item.minimum_points),
+            search: item.subject || '',
+          }))
+        : Object.entries(program.required_subjects || {}).map(([subject, minimumPoints]) => ({
+            subject,
+            minimum_points:
+              minimumPoints === null || minimumPoints === undefined ? '' : String(minimumPoints),
+            search: subject,
+          }));
+
+      const selectedUniversityName = getUniversityNameById(program.university_id);
+
+      setProgramForm({
+        university_id: program.university_id || '',
+        code: program.code || '',
+        name: program.name || '',
+        budget_places:
+          program.budget_places === null || program.budget_places === undefined
+            ? ''
+            : String(program.budget_places),
+        paid_places:
+          program.paid_places === null || program.paid_places === undefined
+            ? ''
+            : String(program.paid_places),
+        passing_score:
+          program.passing_score === null || program.passing_score === undefined
+            ? ''
+            : String(program.passing_score),
+        form_of_education: program.form_of_education || '',
+        required_subjects: requiredSubjects,
+        comment: program.comment || '',
+      });
+
+      setProgramUniversitySearch(
+        selectedUniversityName === 'Неизвестный вуз' ? '' : selectedUniversityName
+      );
+      setIsProgramUniversityDropdownOpen(false);
+      setActiveSubjectDropdownIndex(null);
+      setEditingProgramId(id);
+      setIsAddProgramOpen(true);
+    } catch (requestError) {
+      setProgramsError(requestError.message || 'Не удалось загрузить данные направления');
+    } finally {
+      setProgramSubmitLoading(false);
+    }
   };
 
   const handleDeleteProgram = (id) => {
@@ -298,6 +402,7 @@ const AdminPage = () => {
 
   const handleOpenAddUniversity = () => {
     setSubmitError(null);
+    setEditingUniversityId(null);
     setUniversityForm(INITIAL_UNIVERSITY_FORM);
     setIsAddUniversityOpen(true);
   };
@@ -305,6 +410,7 @@ const AdminPage = () => {
   const handleCloseAddUniversity = () => {
     setIsAddUniversityOpen(false);
     setSubmitError(null);
+    setEditingUniversityId(null);
     setUniversityForm(INITIAL_UNIVERSITY_FORM);
   };
 
@@ -316,6 +422,7 @@ const AdminPage = () => {
     setProgramSubmitError(null);
     setProgramUniversitySearch('');
     setIsProgramUniversityDropdownOpen(false);
+    setEditingProgramId(null);
     setProgramForm(INITIAL_PROGRAM_FORM);
     setIsAddProgramOpen(true);
   };
@@ -326,6 +433,7 @@ const AdminPage = () => {
     setProgramUniversitySearch('');
     setIsProgramUniversityDropdownOpen(false);
     setActiveSubjectDropdownIndex(null);
+    setEditingProgramId(null);
     setProgramForm(INITIAL_PROGRAM_FORM);
   };
 
@@ -401,7 +509,7 @@ const AdminPage = () => {
     setActiveSubjectDropdownIndex(null);
   };
 
-  const handleCreateProgram = async (event) => {
+  const handleSubmitProgram = async (event) => {
     event.preventDefault();
     setProgramSubmitError(null);
 
@@ -470,33 +578,41 @@ const AdminPage = () => {
 
     try {
       setProgramSubmitLoading(true);
-      await createProgram(
-        {
-          university_id: programForm.university_id,
-          code: programForm.code.trim(),
-          name: programForm.name.trim(),
-          budget_places: budgetPlaces,
-          paid_places: paidPlaces,
-          passing_score: passingScore,
-          form_of_education: programForm.form_of_education,
-          required_subjects: subjects,
-          comment: programForm.comment.trim() || null,
-        },
-        adminSession.adminId
-      );
+      const payload = {
+        university_id: programForm.university_id,
+        code: programForm.code.trim(),
+        name: programForm.name.trim(),
+        budget_places: budgetPlaces,
+        paid_places: paidPlaces,
+        passing_score: passingScore,
+        form_of_education: programForm.form_of_education,
+        required_subjects: subjects,
+        comment: programForm.comment.trim() || null,
+      };
+
+      if (editingProgramId) {
+        await updateProgram(editingProgramId, payload, adminSession.adminId);
+      } else {
+        await createProgram(payload, adminSession.adminId);
+      }
 
       handleCloseAddProgram();
       await fetchPrograms();
       await fetchUniversities();
-      setCurrentProgramPage(1);
+      if (!editingProgramId) {
+        setCurrentProgramPage(1);
+      }
     } catch (requestError) {
-      setProgramSubmitError(requestError.message || 'Не удалось создать направление');
+      setProgramSubmitError(
+        requestError.message
+          || (editingProgramId ? 'Не удалось обновить направление' : 'Не удалось создать направление')
+      );
     } finally {
       setProgramSubmitLoading(false);
     }
   };
 
-  const handleCreateUniversity = async (event) => {
+  const handleSubmitUniversity = async (event) => {
     event.preventDefault();
     setSubmitError(null);
 
@@ -543,31 +659,39 @@ const AdminPage = () => {
         return Number.isNaN(parsed) ? null : parsed;
       };
 
-      await createUniversity(
-        {
-          name: universityForm.name.trim(),
-          city: universityForm.city.trim(),
-          address: universityForm.address.trim() || null,
-          website: universityForm.website.trim(),
-          foundation_year: parseOptionalInt(universityForm.foundation_year),
-          students_count: parseOptionalInt(universityForm.students_count),
-          faculties_count: parseOptionalInt(universityForm.faculties_count),
-          phone: universityForm.phone.trim() || null,
-          email: universityForm.email.trim() || null,
-          has_dormitory: universityForm.has_dormitory,
-          military_dept: universityForm.military_dept,
-          rating: parseOptionalFloat(universityForm.rating),
-          programs_count: parseOptionalInt(universityForm.programs_count),
-          comment: universityForm.comment.trim() || null,
-        },
-        adminSession.adminId
-      );
+      const payload = {
+        name: universityForm.name.trim(),
+        city: universityForm.city.trim(),
+        address: universityForm.address.trim() || null,
+        website: universityForm.website.trim(),
+        foundation_year: parseOptionalInt(universityForm.foundation_year),
+        students_count: parseOptionalInt(universityForm.students_count),
+        faculties_count: parseOptionalInt(universityForm.faculties_count),
+        phone: universityForm.phone.trim() || null,
+        email: universityForm.email.trim() || null,
+        has_dormitory: universityForm.has_dormitory,
+        military_dept: universityForm.military_dept,
+        rating: parseOptionalFloat(universityForm.rating),
+        programs_count: parseOptionalInt(universityForm.programs_count),
+        comment: universityForm.comment.trim() || null,
+      };
+
+      if (editingUniversityId) {
+        await updateUniversity(editingUniversityId, payload, adminSession.adminId);
+      } else {
+        await createUniversity(payload, adminSession.adminId);
+      }
 
       handleCloseAddUniversity();
       await fetchUniversities();
-      setCurrentPage(1);
+      if (!editingUniversityId) {
+        setCurrentPage(1);
+      }
     } catch (requestError) {
-      setSubmitError(requestError.message || 'Не удалось создать университет');
+      setSubmitError(
+        requestError.message
+          || (editingUniversityId ? 'Не удалось обновить университет' : 'Не удалось создать университет')
+      );
     } finally {
       setSubmitLoading(false);
     }
@@ -658,7 +782,8 @@ const AdminPage = () => {
                     <button
                       className={styles.actionBtn}
                       onClick={() => handleEditUniversity(uni.id)}
-                      title="Редактировать"
+                      aria-label="Редактировать"
+                      data-tooltip="Редактировать"
                     >
                       ✎
                     </button>
@@ -666,7 +791,8 @@ const AdminPage = () => {
                       className={styles.actionBtn}
                       onClick={() => handleDeleteUniversity(uni.id)}
                       disabled={deletingUniversityId === uni.id}
-                      title="Удалить"
+                      aria-label="Удалить"
+                      data-tooltip="Удалить"
                     >
                       {deletingUniversityId === uni.id ? '...' : '🗑'}
                     </button>
@@ -776,7 +902,8 @@ const AdminPage = () => {
                     <button
                       className={styles.actionBtn}
                       onClick={() => handleEditProgram(program.id)}
-                      title="Редактировать"
+                      aria-label="Редактировать"
+                      data-tooltip="Редактировать"
                     >
                       ✎
                     </button>
@@ -784,7 +911,8 @@ const AdminPage = () => {
                       className={styles.actionBtn}
                       onClick={() => handleDeleteProgram(program.id)}
                       disabled={deletingProgramId === program.id}
-                      title="Удалить"
+                      aria-label="Удалить"
+                      data-tooltip="Удалить"
                     >
                       {deletingProgramId === program.id ? '...' : '🗑'}
                     </button>
@@ -836,7 +964,7 @@ const AdminPage = () => {
           <div className={styles.modalOverlay} onClick={handleCloseAddProgram}>
             <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
               <div className={styles.modalHeader}>
-                <h4>Добавить направление</h4>
+                <h4>{editingProgramId ? 'Редактировать направление' : 'Добавить направление'}</h4>
                 <button
                   type="button"
                   className={styles.closeBtn}
@@ -847,7 +975,7 @@ const AdminPage = () => {
                 </button>
               </div>
 
-              <form className={styles.modalForm} onSubmit={handleCreateProgram}>
+              <form className={styles.modalForm} onSubmit={handleSubmitProgram}>
                 <div className={styles.requiredHint}>Поля со * обязательны для заполнения</div>
 
                 <div className={styles.autocompleteWrapper}>
@@ -1078,7 +1206,9 @@ const AdminPage = () => {
                     Отмена
                   </button>
                   <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={programSubmitLoading}>
-                    {programSubmitLoading ? 'Создание...' : 'Создать направление'}
+                    {programSubmitLoading
+                      ? (editingProgramId ? 'Сохранение...' : 'Создание...')
+                      : (editingProgramId ? 'Сохранить изменения' : 'Создать направление')}
                   </button>
                 </div>
               </form>
@@ -1090,7 +1220,7 @@ const AdminPage = () => {
           <div className={styles.modalOverlay} onClick={handleCloseAddUniversity}>
             <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
               <div className={styles.modalHeader}>
-                <h4>Добавить вуз</h4>
+                <h4>{editingUniversityId ? 'Редактировать вуз' : 'Добавить вуз'}</h4>
                 <button
                   type="button"
                   className={styles.closeBtn}
@@ -1101,7 +1231,7 @@ const AdminPage = () => {
                 </button>
               </div>
 
-              <form className={styles.modalForm} onSubmit={handleCreateUniversity}>
+              <form className={styles.modalForm} onSubmit={handleSubmitUniversity}>
                 <div className={styles.requiredHint}>Поля со * обязательны для заполнения</div>
 
                 <label className={styles.formField}>
@@ -1288,7 +1418,9 @@ const AdminPage = () => {
                     Отмена
                   </button>
                   <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={submitLoading}>
-                    {submitLoading ? 'Создание...' : 'Создать вуз'}
+                    {submitLoading
+                      ? (editingUniversityId ? 'Сохранение...' : 'Создание...')
+                      : (editingUniversityId ? 'Сохранить изменения' : 'Создать вуз')}
                   </button>
                 </div>
               </form>
