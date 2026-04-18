@@ -17,6 +17,7 @@ import {
 } from '../services/api';
 import { getAdminSession } from '../services/auth';
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
 const PHONE_REGEX = /^\+?[0-9()\-\s]{7,20}$/;
 const FORM_OF_EDUCATION_OPTIONS = ['Очная', 'Очно-заочная', 'Заочная'];
@@ -48,6 +49,12 @@ const getDeleteUniversityMessage = (name) =>
 
 const getDeleteProgramMessage = (name, code) =>
   `Вы уверены, что хотите удалить направление "${name}" (${code})? Это действие нельзя отменить.`;
+
+const isValidPhone = (value) => {
+  const normalized = value.trim();
+  const phoneNumber = parsePhoneNumberFromString(normalized, 'RU');
+  return Boolean(phoneNumber && phoneNumber.isValid());
+};
 
 const INITIAL_UNIVERSITY_FORM = {
   name: '',
@@ -634,7 +641,7 @@ const AdminPage = () => {
       return;
     }
 
-    if (universityForm.phone.trim() && !PHONE_REGEX.test(universityForm.phone.trim())) {
+    if (universityForm.phone.trim() && !isValidPhone(universityForm.phone.trim())) {
       setSubmitError('Некорректный формат телефона. Пример: +7 (495) 123-45-67');
       return;
     }
