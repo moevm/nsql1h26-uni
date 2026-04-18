@@ -68,7 +68,7 @@ validation_universities_schema = {
             "phone": {
                 "bsonType": "string",
                 "maxLength": 30,
-                "pattern": "^$|^\\+?[0-9()\\-\\s]{7,20}$"
+                "pattern": "^$|^(?=(?:\\D*\\d){7,15}\\D*$)\\+?[0-9()\\-\\s]{7,20}$"
             },
             "email": {
                 "bsonType": "string",

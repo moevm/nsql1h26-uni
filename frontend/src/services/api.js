@@ -218,4 +218,26 @@ export async function exportAllDataXml(adminId) {
   return { blob, filename };
 }
 
+export async function importAllDataJson(file, adminId) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${API_BASE_URL}/data-transfer/import/json`, {
+    method: 'POST',
+    headers: {
+      'x-user-id': adminId,
+    },
+    body: formData,
+  });
+
+  const contentType = response.headers.get('content-type') || '';
+  const data = contentType.includes('application/json') ? await response.json() : null;
+
+  if (!response.ok) {
+    throw new Error(data?.detail || data?.message || 'Не удалось импортировать данные');
+  }
+
+  return data;
+}
+
 export { API_BASE_URL };
