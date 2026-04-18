@@ -3,6 +3,7 @@ import csv
 import io
 import zipfile
 from datetime import datetime
+from xml.etree import ElementTree as ET
 
 from bson import ObjectId
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -64,6 +65,52 @@ def build_csv_content(rows: list[dict]) -> str:
         writer.writerow(normalized_row)
 
     return output.getvalue()
+
+
+def append_xml_value(parent: ET.Element, key: str, value):
+    if isinstance(value, dict):
+        element = ET.SubElement(parent, key)
+        for nested_key, nested_value in value.items():
+            append_xml_value(element, str(nested_key), nested_value)
+        return
+
+    if isinstance(value, list):
+        list_element = ET.SubElement(parent, key)
+        for item in value:
+            item_element = ET.SubElement(list_element, "item")
+            if isinstance(item, (dict, list)):
+                append_xml_value(item_element, "value", item)
+            else:
+                item_element.text = "" if item is None else str(item)
+        return
+
+    element = ET.SubElement(parent, key)
+    element.text = "" if value is None else str(value)
+
+
+def build_xml_content(admins: list, universities: list, programs: list) -> str:
+    root = ET.Element("snapshot")
+
+    meta = ET.SubElement(root, "meta")
+    ET.SubElement(meta, "exported_at").text = datetime.now().isoformat()
+    ET.SubElement(meta, "version").text = "1.0"
+    ET.SubElement(meta, "format").text = "xml"
+
+    sections = (
+        ("admins", admins),
+        ("universities", universities),
+        ("programs", programs),
+    )
+
+    for section_name, rows in sections:
+        section = ET.SubElement(root, section_name)
+        for row in rows:
+            item = ET.SubElement(section, "item")
+            for key, value in row.items():
+                append_xml_value(item, str(key), value)
+
+    xml_bytes = ET.tostring(root, encoding="utf-8")
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + xml_bytes.decode("utf-8")
 
 
 async def get_current_admin(
@@ -147,6 +194,26 @@ async def export_all_data_csv(
     return Response(
         content=zip_buffer.getvalue(),
         media_type="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )
+
+
+@router.get("/export/xml")
+async def export_all_data_xml(
+    admin: dict = Depends(get_current_admin),
+    db: UniversitiesDataBase = Depends(get_db_connection),
+):
+    del admin
+
+    admins, universities, programs = get_all_collections_data(db)
+    xml_content = build_xml_content(admins, universities, programs)
+
+    filename = f"nsql-export-{datetime.now().strftime('%Y%m%d-%H%M%S')}.xml"
+    return Response(
+        content=xml_content,
+        media_type="application/xml",
         headers={
             "Content-Disposition": f'attachment; filename="{filename}"',
         },

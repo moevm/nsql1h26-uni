@@ -7,6 +7,7 @@ import {
   deleteUniversity,
   exportAllDataCsv,
   exportAllDataJson,
+  exportAllDataXml,
   getProgram,
   getPrograms,
   getUniversity,
@@ -716,7 +717,12 @@ const AdminPage = () => {
       setExportError(null);
       setExportSuccessMessage(null);
 
-      const exporter = exportFormat === 'csv' ? exportAllDataCsv : exportAllDataJson;
+      const exporterByFormat = {
+        json: exportAllDataJson,
+        csv: exportAllDataCsv,
+        xml: exportAllDataXml,
+      };
+      const exporter = exporterByFormat[exportFormat] || exportAllDataJson;
       const { blob, filename } = await exporter(adminSession.adminId);
 
       const downloadUrl = window.URL.createObjectURL(blob);
@@ -765,6 +771,7 @@ const AdminPage = () => {
               >
                 <option value="json">JSON</option>
                 <option value="csv">CSV</option>
+                <option value="xml">XML</option>
               </select>
               <button
                 className={`${styles.btn} ${styles.btnPrimary}`}
