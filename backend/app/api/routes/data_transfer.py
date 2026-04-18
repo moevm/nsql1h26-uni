@@ -1,4 +1,7 @@
 import json
+import csv
+import io
+import zipfile
 from datetime import datetime
 
 from bson import ObjectId
@@ -27,6 +30,42 @@ def serialize_mongo_value(value):
     return value
 
 
+def get_all_collections_data(db: UniversitiesDataBase) -> tuple[list, list, list]:
+    admins_controller = db.get_admins_collection()
+    universities_controller = db.get_universities_collection()
+    programs_controller = db.get_programs_collection()
+
+    if not admins_controller or not universities_controller or not programs_controller:
+        raise HTTPException(status_code=500, detail="База данных недоступна")
+
+    admins = serialize_mongo_value(admins_controller.find_all_admins())
+    universities = serialize_mongo_value(universities_controller.find_universities_by_filters())
+    programs = serialize_mongo_value(programs_controller.find_programs_by_filters())
+    return admins, universities, programs
+
+
+def build_csv_content(rows: list[dict]) -> str:
+    if not rows:
+        return ""
+
+    fieldnames = sorted({key for row in rows for key in row.keys()})
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer.writeheader()
+
+    for row in rows:
+        normalized_row = {}
+        for key in fieldnames:
+            value = row.get(key)
+            if isinstance(value, (dict, list)):
+                normalized_row[key] = json.dumps(value, ensure_ascii=False)
+            else:
+                normalized_row[key] = value
+        writer.writerow(normalized_row)
+
+    return output.getvalue()
+
+
 async def get_current_admin(
     x_user_id: str = Header(...),
     db: UniversitiesDataBase = Depends(get_db_connection),
@@ -49,16 +88,7 @@ async def export_all_data_json(
 ):
     del admin
 
-    admins_controller = db.get_admins_collection()
-    universities_controller = db.get_universities_collection()
-    programs_controller = db.get_programs_collection()
-
-    if not admins_controller or not universities_controller or not programs_controller:
-        raise HTTPException(status_code=500, detail="База данных недоступна")
-
-    admins = admins_controller.find_all_admins()
-    universities = universities_controller.find_universities_by_filters()
-    programs = programs_controller.find_programs_by_filters()
+    admins, universities, programs = get_all_collections_data(db)
 
     payload = {
         "meta": {
@@ -66,9 +96,9 @@ async def export_all_data_json(
             "version": "1.0",
             "format": "json",
         },
-        "admins": serialize_mongo_value(admins),
-        "universities": serialize_mongo_value(universities),
-        "programs": serialize_mongo_value(programs),
+        "admins": admins,
+        "universities": universities,
+        "programs": programs,
     }
 
     filename = f"nsql-export-{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
@@ -76,6 +106,47 @@ async def export_all_data_json(
     return Response(
         content=json.dumps(payload, ensure_ascii=False, indent=2),
         media_type="application/json",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )
+
+
+@router.get("/export/csv")
+async def export_all_data_csv(
+    admin: dict = Depends(get_current_admin),
+    db: UniversitiesDataBase = Depends(get_db_connection),
+):
+    del admin
+
+    admins, universities, programs = get_all_collections_data(db)
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as zip_file:
+        zip_file.writestr("admins.csv", build_csv_content(admins))
+        zip_file.writestr("universities.csv", build_csv_content(universities))
+        zip_file.writestr("programs.csv", build_csv_content(programs))
+
+        zip_file.writestr(
+            "meta.json",
+            json.dumps(
+                {
+                    "exported_at": datetime.now().isoformat(),
+                    "version": "1.0",
+                    "format": "csv",
+                    "files": ["admins.csv", "universities.csv", "programs.csv"],
+                },
+                ensure_ascii=False,
+                indent=2,
+            ),
+        )
+
+    zip_buffer.seek(0)
+    filename = f"nsql-export-{datetime.now().strftime('%Y%m%d-%H%M%S')}.zip"
+
+    return Response(
+        content=zip_buffer.getvalue(),
+        media_type="application/zip",
         headers={
             "Content-Disposition": f'attachment; filename="{filename}"',
         },

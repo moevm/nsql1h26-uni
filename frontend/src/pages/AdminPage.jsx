@@ -5,6 +5,7 @@ import {
   createUniversity,
   deleteProgram,
   deleteUniversity,
+  exportAllDataCsv,
   exportAllDataJson,
   getProgram,
   getPrograms,
@@ -99,6 +100,7 @@ const AdminPage = () => {
   const [activeSubjectDropdownIndex, setActiveSubjectDropdownIndex] = useState(null);
   const [programSubmitLoading, setProgramSubmitLoading] = useState(false);
   const [programSubmitError, setProgramSubmitError] = useState(null);
+  const [exportFormat, setExportFormat] = useState('json');
   const [exportLoading, setExportLoading] = useState(false);
   const [exportError, setExportError] = useState(null);
   const [exportSuccessMessage, setExportSuccessMessage] = useState(null);
@@ -701,7 +703,7 @@ const AdminPage = () => {
     }
   };
 
-  const handleExportAllDataJson = async () => {
+  const handleExportAllData = async () => {
     const adminSession = getAdminSession();
     if (!adminSession?.adminId) {
       setExportError('Сессия администратора не найдена. Войдите снова.');
@@ -714,7 +716,8 @@ const AdminPage = () => {
       setExportError(null);
       setExportSuccessMessage(null);
 
-      const { blob, filename } = await exportAllDataJson(adminSession.adminId);
+      const exporter = exportFormat === 'csv' ? exportAllDataCsv : exportAllDataJson;
+      const { blob, filename } = await exporter(adminSession.adminId);
 
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -754,13 +757,19 @@ const AdminPage = () => {
 
             <div className={styles.exportBox}>
               <div className={styles.boxTitle}>Экспорт</div>
-              <select className={styles.formatSelect}>
-                <option>JSON</option>
+              <select
+                className={styles.formatSelect}
+                value={exportFormat}
+                onChange={(event) => setExportFormat(event.target.value)}
+                disabled={exportLoading}
+              >
+                <option value="json">JSON</option>
+                <option value="csv">CSV</option>
               </select>
               <button
                 className={`${styles.btn} ${styles.btnPrimary}`}
                 style={{ marginBottom: '10px' }}
-                onClick={handleExportAllDataJson}
+                onClick={handleExportAllData}
                 disabled={exportLoading}
               >
                 {exportLoading ? 'Экспорт...' : 'Скачать все данные'}
