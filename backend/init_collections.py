@@ -6,6 +6,28 @@ from app.database.validation_schemas import validation_admins_schema, validation
 from app.api.routes.utils import get_hash_by_username_password
 
 
+def should_seed_database(db) -> bool:
+    admins_controller = db.get_admins_collection()
+    universities_controller = db.get_universities_collection()
+    programs_controller = db.get_programs_collection()
+
+    if not admins_controller or not universities_controller or not programs_controller:
+        print("Could not check db state for seeding")
+        return False
+
+    admins_count = admins_controller._collection.count_documents({})
+    universities_count = universities_controller._collection.count_documents({})
+    programs_count = programs_controller._collection.count_documents({})
+
+    is_empty = admins_count == 0 and universities_count == 0 and programs_count == 0
+    if not is_empty:
+        print(
+            "Database is not empty, skip seed "
+            f"(admins={admins_count}, universities={universities_count}, programs={programs_count})"
+        )
+    return is_empty
+
+
 def seed_default_admin(db):
     admins_controller = db.get_admins_collection()
     if not admins_controller:
@@ -52,7 +74,7 @@ def seed_default_universities(db):
             "phone": "+7 (495) 939-10-00",
             "email": "priem@msu.ru",
             "rating": 4.9,
-            "programs_count": 128
+            "programs_count": 3
         },
         {
             "name": "МФТИ (Физтех)",
@@ -67,7 +89,7 @@ def seed_default_universities(db):
             "phone": "+7 (495) 100-20-30",
             "email": "priem@mfti.ru",
             "rating": 4.8,
-            "programs_count": 85
+            "programs_count": 3
         },
         {
             "name": "НИУ ВШЭ",
@@ -82,7 +104,7 @@ def seed_default_universities(db):
             "phone": "+7 (495) 111-11-11",
             "email": "priem@vshe.ru",
             "rating": 4.7,
-            "programs_count": 156
+            "programs_count": 3
         },
         {
             "name": "МГТУ им. Баумана",
@@ -97,7 +119,7 @@ def seed_default_universities(db):
             "phone": "+7 (495) 100-20-30",
             "email": "priem@msu.ru",
             "rating": 4.6,
-            "programs_count": 112
+            "programs_count": 3
         },
         {
             "name": "СПбГУ",
@@ -112,7 +134,7 @@ def seed_default_universities(db):
             "phone": "+7 (812) 222-22-22",
             "email": "priem@spbgu.ru",
             "rating": 4.7,
-            "programs_count": 98
+            "programs_count": 3
         },
         {
             "name": "НГУ",
@@ -127,7 +149,22 @@ def seed_default_universities(db):
             "phone": "+7 (495) 500-20-30",
             "email": "priem@ngu.ru",
             "rating": 4.5,
-            "programs_count": 67
+            "programs_count": 3
+        },
+        {
+            "name": "УрФУ",
+            "city": "Екатеринбург",
+            "address": "ул. Мира, д. 19",
+            "has_dormitory": True,
+            "military_dept": True,
+            "website": "https://urfu.ru",
+            "foundation_year": 1920,
+            "students_count": 35_000,
+            "faculties_count": 14,
+            "phone": "+7 (343) 375-44-44",
+            "email": "priem@urfu.ru",
+            "rating": 4.6,
+            "programs_count": 3
         }
     ]
 
@@ -199,6 +236,7 @@ def seed_default_programs(db):
         "МГТУ им. Баумана",
         "СПбГУ",
         "НГУ",
+        "УрФУ",
     ]
 
     university_ids = {}
@@ -462,6 +500,48 @@ def seed_default_programs(db):
                 "Русский язык": 66
             }
         },
+        {
+            "university_name": "УрФУ",
+            "code": "09.03.01",
+            "name": "Информатика и вычислительная техника",
+            "budget_places": 90,
+            "paid_places": 45,
+            "passing_score": 271,
+            "form_of_education": "Очная",
+            "required_subjects": {
+                "Математика": 70,
+                "Информатика": 70,
+                "Русский язык": 66
+            }
+        },
+        {
+            "university_name": "УрФУ",
+            "code": "13.03.02",
+            "name": "Электроэнергетика и электротехника",
+            "budget_places": 75,
+            "paid_places": 30,
+            "passing_score": 262,
+            "form_of_education": "Очная",
+            "required_subjects": {
+                "Математика": 68,
+                "Физика": 68,
+                "Русский язык": 64
+            }
+        },
+        {
+            "university_name": "УрФУ",
+            "code": "38.03.02",
+            "name": "Менеджмент",
+            "budget_places": 60,
+            "paid_places": 70,
+            "passing_score": 258,
+            "form_of_education": "Очная",
+            "required_subjects": {
+                "Математика": 64,
+                "Обществознание": 68,
+                "Русский язык": 66
+            }
+        },
     ]
 
     count = 0
@@ -499,7 +579,11 @@ if __name__ == "__main__":
     db.create_collections(validation_admins_schema=validation_admins_schema,
                           validation_programs_schema=validation_programs_schema,
                           validation_universities_schema=validation_universities_schema)
-    seed_default_admin(db)
-    seed_default_universities(db)
-    seed_default_programs(db)
+
+    if should_seed_database(db):
+        print("Database is empty, starting seed")
+        seed_default_admin(db)
+        seed_default_universities(db)
+        seed_default_programs(db)
+
     db.close_db()

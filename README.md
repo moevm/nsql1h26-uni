@@ -46,3 +46,8 @@ docker compose down
 ```bash
 docker compose down -v
 ```
+
+###Dev-режим с поддержкой hot-reload
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
