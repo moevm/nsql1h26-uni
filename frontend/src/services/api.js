@@ -83,6 +83,15 @@ export async function createUniversity(payload, adminId) {
   });
 }
 
+export async function deleteUniversity(universityId, adminId) {
+  return request(`/universities/${universityId}`, {
+    method: 'DELETE',
+    headers: {
+      'x-user-id': adminId,
+    },
+  });
+}
+
 export async function createProgram(payload, adminId) {
   return request('/programs/', {
     method: 'POST',
