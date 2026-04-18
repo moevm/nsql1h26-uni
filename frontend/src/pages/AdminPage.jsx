@@ -215,6 +215,13 @@ const AdminPage = () => {
         return updated;
       });
 
+      setPrograms((prev) => {
+        const updated = prev.filter((item) => item.universityId !== universityToDelete.id);
+        const newTotalProgramPages = Math.max(1, Math.ceil(updated.length / programItemsPerPage));
+        setCurrentProgramPage((prevPage) => Math.min(prevPage, newTotalProgramPages));
+        return updated;
+      });
+
       setUniversityToDelete(null);
     } catch (requestError) {
       setError(requestError.message || 'Не удалось удалить университет');
@@ -1294,7 +1301,7 @@ const AdminPage = () => {
               </div>
 
               <div className={styles.requiredHint}>
-                Вы уверены, что хотите удалить вуз "{universityToDelete.name}"? Это действие нельзя отменить.
+                Вы уверены, что хотите удалить вуз "{universityToDelete.name}"? Это приведет к удалению всех связанных данных. Это действие нельзя отменить.
               </div>
 
               <div className={styles.modalActions}>
