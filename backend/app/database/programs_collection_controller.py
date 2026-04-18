@@ -184,3 +184,20 @@ class ProgramsCollectionController(BaseCollectionController):
         except Exception as e:
             print("Error delete program:", e)
             return False
+
+    def delete_programs_by_university_id(self, university_id: str) -> int | None:
+        """Удаляет все направления вуза и возвращает количество удаленных документов.
+        Если возникла ошибка, возвращает None."""
+        if not self._check_collection():
+            return None
+        try:
+            program_filter = {
+                "university_id": ObjectId(university_id)
+            }
+            result_delete = self._collection.delete_many(program_filter)
+            if result_delete.acknowledged:
+                return result_delete.deleted_count
+            return None
+        except Exception as e:
+            print("Error delete programs by university id:", e)
+            return None

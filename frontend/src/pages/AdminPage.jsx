@@ -9,6 +9,7 @@ import {
   getUniversities,
 } from '../services/api';
 import { getAdminSession } from '../services/auth';
+import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
 
 const PHONE_REGEX = /^\+?[0-9()\-\s]{7,20}$/;
 const FORM_OF_EDUCATION_OPTIONS = ['Очная', 'Очно-заочная', 'Заочная'];
@@ -29,6 +30,17 @@ const SUBJECT_OPTIONS = [
   'Испанский язык',
   'Китайский язык',
 ];
+
+const DELETE_CONFIRM_TEXT = 'Удалить';
+const DELETE_CANCEL_TEXT = 'Отмена';
+const DELETE_UNIVERSITY_TITLE = 'Удалить вуз';
+const DELETE_PROGRAM_TITLE = 'Удалить направление';
+
+const getDeleteUniversityMessage = (name) =>
+  `Вы уверены, что хотите удалить вуз "${name}"? Это приведет к удалению всех связанных данных. Это действие нельзя отменить.`;
+
+const getDeleteProgramMessage = (name, code) =>
+  `Вы уверены, что хотите удалить направление "${name}" (${code})? Это действие нельзя отменить.`;
 
 const INITIAL_UNIVERSITY_FORM = {
   name: '',
@@ -212,6 +224,13 @@ const AdminPage = () => {
         const updated = prev.filter((item) => item.id !== universityToDelete.id);
         const newTotalPages = Math.max(1, Math.ceil(updated.length / itemsPerPage));
         setCurrentPage((prevPage) => Math.min(prevPage, newTotalPages));
+        return updated;
+      });
+
+      setPrograms((prev) => {
+        const updated = prev.filter((item) => item.universityId !== universityToDelete.id);
+        const newTotalProgramPages = Math.max(1, Math.ceil(updated.length / programItemsPerPage));
+        setCurrentProgramPage((prevPage) => Math.min(prevPage, newTotalProgramPages));
         return updated;
       });
 
@@ -1277,89 +1296,27 @@ const AdminPage = () => {
           </div>
         )}
 
-        {universityToDelete && (
-          <div className={styles.modalOverlay} onClick={handleCloseDeleteUniversityModal}>
-            <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
-              <div className={styles.modalHeader}>
-                <h4>Удалить вуз</h4>
-                <button
-                  type="button"
-                  className={styles.closeBtn}
-                  onClick={handleCloseDeleteUniversityModal}
-                  aria-label="Закрыть"
-                  disabled={Boolean(deletingUniversityId)}
-                >
-                  ✕
-                </button>
-              </div>
+        <ConfirmModal
+          isOpen={Boolean(universityToDelete)}
+          title={DELETE_UNIVERSITY_TITLE}
+          message={getDeleteUniversityMessage(universityToDelete?.name || '')}
+          confirmText={DELETE_CONFIRM_TEXT}
+          cancelText={DELETE_CANCEL_TEXT}
+          isLoading={Boolean(deletingUniversityId)}
+          onConfirm={handleConfirmDeleteUniversity}
+          onClose={handleCloseDeleteUniversityModal}
+        />
 
-              <div className={styles.requiredHint}>
-                Вы уверены, что хотите удалить вуз "{universityToDelete.name}"? Это действие нельзя отменить.
-              </div>
-
-              <div className={styles.modalActions}>
-                <button
-                  type="button"
-                  className={`${styles.btn} ${styles.btnSecondary}`}
-                  onClick={handleCloseDeleteUniversityModal}
-                  disabled={Boolean(deletingUniversityId)}
-                >
-                  Отмена
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.btn} ${styles.btnDanger}`}
-                  onClick={handleConfirmDeleteUniversity}
-                  disabled={Boolean(deletingUniversityId)}
-                >
-                  {deletingUniversityId ? 'Удаление...' : 'Удалить'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {programToDelete && (
-          <div className={styles.modalOverlay} onClick={handleCloseDeleteProgramModal}>
-            <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
-              <div className={styles.modalHeader}>
-                <h4>Удалить направление</h4>
-                <button
-                  type="button"
-                  className={styles.closeBtn}
-                  onClick={handleCloseDeleteProgramModal}
-                  aria-label="Закрыть"
-                  disabled={Boolean(deletingProgramId)}
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className={styles.requiredHint}>
-                Вы уверены, что хотите удалить направление "{programToDelete.name}" ({programToDelete.code})? Это действие нельзя отменить.
-              </div>
-
-              <div className={styles.modalActions}>
-                <button
-                  type="button"
-                  className={`${styles.btn} ${styles.btnSecondary}`}
-                  onClick={handleCloseDeleteProgramModal}
-                  disabled={Boolean(deletingProgramId)}
-                >
-                  Отмена
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.btn} ${styles.btnDanger}`}
-                  onClick={handleConfirmDeleteProgram}
-                  disabled={Boolean(deletingProgramId)}
-                >
-                  {deletingProgramId ? 'Удаление...' : 'Удалить'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <ConfirmModal
+          isOpen={Boolean(programToDelete)}
+          title={DELETE_PROGRAM_TITLE}
+          message={getDeleteProgramMessage(programToDelete?.name || '', programToDelete?.code || '-')}
+          confirmText={DELETE_CONFIRM_TEXT}
+          cancelText={DELETE_CANCEL_TEXT}
+          isLoading={Boolean(deletingProgramId)}
+          onConfirm={handleConfirmDeleteProgram}
+          onClose={handleCloseDeleteProgramModal}
+        />
       </div>
     );
   };

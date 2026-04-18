@@ -196,12 +196,28 @@ async def delete_university(
         db: UniversitiesDataBase = Depends(get_db_connection)
 ):
     """Удалить университет (требуется аутентификация администратора)"""
+    del admin
     universities_controller = db.get_universities_collection()
     if not universities_controller:
         raise HTTPException(status_code=500, detail="База данных недоступна")
 
-    success = universities_controller.delete_university(university_id)
-    if not success:
+    programs_controller = db.get_programs_collection()
+    if not programs_controller:
+        raise HTTPException(status_code=500, detail="База данных недоступна")
+
+    existing_university = universities_controller.find_university_by_id(university_id)
+    if not existing_university:
         raise HTTPException(status_code=404, detail="Университет не найден")
 
-    return {"message": "Университет успешно удален"}
+    deleted_programs_count = programs_controller.delete_programs_by_university_id(university_id)
+    if deleted_programs_count is None:
+        raise HTTPException(status_code=500, detail="Не удалось удалить связанные направления")
+
+    success = universities_controller.delete_university(university_id)
+    if not success:
+        raise HTTPException(status_code=500, detail="Не удалось удалить университет")
+
+    return {
+        "message": "Университет и связанные направления успешно удалены",
+        "deleted_programs_count": deleted_programs_count
+    }
