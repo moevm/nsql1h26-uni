@@ -121,6 +121,16 @@ export async function deleteProgram(programId, adminId) {
   });
 }
 
+export async function updateProgram(programId, payload, adminId) {
+  return request(`/programs/${programId}`, {
+    method: 'PUT',
+    headers: {
+      'x-user-id': adminId,
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function getProgramsByUniversity(universityId, filters = {}) {
   const params = new URLSearchParams({ university_id: universityId });
 
