@@ -10,12 +10,15 @@ services:
     networks:
       - app-network
 
-  db-init:
+  fastapi-app:
     build:
       context: ./backend
-    container_name: db_init
+    container_name: fastapi_app
+    restart: unless-stopped
     depends_on:
       - db
+    ports:
+      - "127.0.0.1:8080:8000"
     environment:
       - DATABASE_TYPE=mongodb
       - DATABASE_HOST=db
@@ -25,27 +28,7 @@ services:
       - SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD}
     networks:
       - app-network
-    command: sh -c "sleep 5 && python init_collections.py"
-    restart: "no"
-
-  fastapi-app:
-    build:
-      context: ./backend
-    container_name: fastapi_app
-    restart: unless-stopped
-    depends_on:
-      - db
-      - db-init
-    ports:
-      - "127.0.0.1:8080:8000"
-    environment:
-      - DATABASE_TYPE=mongodb
-      - DATABASE_HOST=db
-      - DATABASE_PORT=27017
-      - DATABASE_NAME=university_db
-    networks:
-      - app-network
-    command: sh -c "sleep 5 && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    command: sh -c "sleep 5 && python init_collections.py && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
   frontend:
     build:
