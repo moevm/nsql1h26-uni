@@ -152,4 +152,26 @@ export async function getProgramsByUniversity(universityId, filters = {}) {
   return request(`/programs/?${params.toString()}`);
 }
 
+export async function exportAllDataJson(adminId) {
+  const response = await fetch(`${API_BASE_URL}/data-transfer/export/json`, {
+    method: 'GET',
+    headers: {
+      'x-user-id': adminId,
+    },
+  });
+
+  if (!response.ok) {
+    const contentType = response.headers.get('content-type') || '';
+    const data = contentType.includes('application/json') ? await response.json() : null;
+    throw new Error(data?.detail || data?.message || 'Не удалось экспортировать данные');
+  }
+
+  const blob = await response.blob();
+  const contentDisposition = response.headers.get('content-disposition') || '';
+  const filenameMatch = contentDisposition.match(/filename="?([^\"]+)"?/i);
+  const filename = filenameMatch?.[1] || 'nsql-export.json';
+
+  return { blob, filename };
+}
+
 export { API_BASE_URL };

@@ -65,3 +65,11 @@ class AdminsCollectionController(BaseCollectionController):
         }
         adminInDB = self._collection.find_one(adminFilter)
         return adminInDB
+
+    def find_all_admins(self) -> list:
+        """Возвращает список всех админов."""
+        if not self._check_collection():
+            return []
+
+        admins_in_db = self._collection.find({})
+        return [admin for admin in admins_in_db]

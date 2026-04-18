@@ -5,6 +5,7 @@ import {
   createUniversity,
   deleteProgram,
   deleteUniversity,
+  exportAllDataJson,
   getProgram,
   getPrograms,
   getUniversity,
@@ -98,6 +99,9 @@ const AdminPage = () => {
   const [activeSubjectDropdownIndex, setActiveSubjectDropdownIndex] = useState(null);
   const [programSubmitLoading, setProgramSubmitLoading] = useState(false);
   const [programSubmitError, setProgramSubmitError] = useState(null);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [exportError, setExportError] = useState(null);
+  const [exportSuccessMessage, setExportSuccessMessage] = useState(null);
   const [deletingProgramId, setDeletingProgramId] = useState(null);
   const [programToDelete, setProgramToDelete] = useState(null);
   const [programs, setPrograms] = useState([]);
@@ -697,6 +701,38 @@ const AdminPage = () => {
     }
   };
 
+  const handleExportAllDataJson = async () => {
+    const adminSession = getAdminSession();
+    if (!adminSession?.adminId) {
+      setExportError('Сессия администратора не найдена. Войдите снова.');
+      setExportSuccessMessage(null);
+      return;
+    }
+
+    try {
+      setExportLoading(true);
+      setExportError(null);
+      setExportSuccessMessage(null);
+
+      const { blob, filename } = await exportAllDataJson(adminSession.adminId);
+
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+
+      setExportSuccessMessage(`Экспорт завершен: ${filename}`);
+    } catch (requestError) {
+      setExportError(requestError.message || 'Не удалось экспортировать данные');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   return (
     <div className={styles.container}>
         <div className={styles.screenTitle}>⚙️ Администрирование</div>
@@ -721,9 +757,18 @@ const AdminPage = () => {
               <select className={styles.formatSelect}>
                 <option>JSON</option>
               </select>
-              <button className={`${styles.btn} ${styles.btnPrimary}`} style={{ marginBottom: '10px' }}>
-                Скачать все данные
+              <button
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                style={{ marginBottom: '10px' }}
+                onClick={handleExportAllDataJson}
+                disabled={exportLoading}
+              >
+                {exportLoading ? 'Экспорт...' : 'Скачать все данные'}
               </button>
+              {exportError && <div className={styles.formError}>❌ {exportError}</div>}
+              {exportSuccessMessage && (
+                <div className={styles.requiredHint}>✅ {exportSuccessMessage}</div>
+              )}
             </div>
           </div>
         </div>
