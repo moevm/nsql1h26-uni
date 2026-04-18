@@ -248,6 +248,7 @@
 }
 
 .actionBtn {
+  position: relative;
   padding: 4px 8px;
   border: 1px solid #cbd5e1;
   border-radius: 20px;
@@ -257,6 +258,59 @@
   transition: all 0.2s;
   min-width: 32px;
   text-align: center;
+}
+
+.actionBtn::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%) translateY(4px);
+  background: #0f2034;
+  color: #f8fbff;
+  padding: 5px 8px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  z-index: 25;
+}
+
+.actionBtn::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 4px);
+  transform: translateX(-50%) translateY(4px);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #0f2034;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  z-index: 25;
+}
+
+.actionBtn:hover::before,
+.actionBtn:hover::after,
+.actionBtn:focus-visible::before,
+.actionBtn:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.actionBtn:disabled::before,
+.actionBtn:disabled::after {
+  display: none;
 }
 
 .actionBtn:hover {

@@ -782,7 +782,8 @@ const AdminPage = () => {
                     <button
                       className={styles.actionBtn}
                       onClick={() => handleEditUniversity(uni.id)}
-                      title="Редактировать"
+                      aria-label="Редактировать"
+                      data-tooltip="Редактировать"
                     >
                       ✎
                     </button>
@@ -790,7 +791,8 @@ const AdminPage = () => {
                       className={styles.actionBtn}
                       onClick={() => handleDeleteUniversity(uni.id)}
                       disabled={deletingUniversityId === uni.id}
-                      title="Удалить"
+                      aria-label="Удалить"
+                      data-tooltip="Удалить"
                     >
                       {deletingUniversityId === uni.id ? '...' : '🗑'}
                     </button>
@@ -900,7 +902,8 @@ const AdminPage = () => {
                     <button
                       className={styles.actionBtn}
                       onClick={() => handleEditProgram(program.id)}
-                      title="Редактировать"
+                      aria-label="Редактировать"
+                      data-tooltip="Редактировать"
                     >
                       ✎
                     </button>
@@ -908,7 +911,8 @@ const AdminPage = () => {
                       className={styles.actionBtn}
                       onClick={() => handleDeleteProgram(program.id)}
                       disabled={deletingProgramId === program.id}
-                      title="Удалить"
+                      aria-label="Удалить"
+                      data-tooltip="Удалить"
                     >
                       {deletingProgramId === program.id ? '...' : '🗑'}
                     </button>
