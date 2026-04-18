@@ -3,6 +3,7 @@ import styles from './AdminPage.module.css';
 import {
   createProgram,
   createUniversity,
+  deleteProgram,
   deleteUniversity,
   getPrograms,
   getUniversities,
@@ -79,6 +80,8 @@ const AdminPage = () => {
   const [activeSubjectDropdownIndex, setActiveSubjectDropdownIndex] = useState(null);
   const [programSubmitLoading, setProgramSubmitLoading] = useState(false);
   const [programSubmitError, setProgramSubmitError] = useState(null);
+  const [deletingProgramId, setDeletingProgramId] = useState(null);
+  const [programToDelete, setProgramToDelete] = useState(null);
   const [programs, setPrograms] = useState([]);
   const [programsLoading, setProgramsLoading] = useState(true);
   const [programsError, setProgramsError] = useState(null);
@@ -226,8 +229,52 @@ const AdminPage = () => {
   };
 
   const handleDeleteProgram = (id) => {
-    console.log('Удаление направления:', id);
-    // TODO: Реализовать удаление
+    const selectedProgram = programs.find((item) => item.id === id);
+    setProgramToDelete({
+      id,
+      name: selectedProgram?.name || 'без названия',
+      code: selectedProgram?.code || '-',
+    });
+  };
+
+  const handleCloseDeleteProgramModal = () => {
+    if (deletingProgramId) {
+      return;
+    }
+    setProgramToDelete(null);
+  };
+
+  const handleConfirmDeleteProgram = async () => {
+    if (!programToDelete?.id) {
+      return;
+    }
+
+    const adminSession = getAdminSession();
+    if (!adminSession?.adminId) {
+      setProgramsError('Сессия администратора не найдена. Войдите снова.');
+      setProgramToDelete(null);
+      return;
+    }
+
+    try {
+      setDeletingProgramId(programToDelete.id);
+      setProgramsError(null);
+
+      await deleteProgram(programToDelete.id, adminSession.adminId);
+
+      setPrograms((prev) => {
+        const updated = prev.filter((item) => item.id !== programToDelete.id);
+        const newTotalPages = Math.max(1, Math.ceil(updated.length / programItemsPerPage));
+        setCurrentProgramPage((prevPage) => Math.min(prevPage, newTotalPages));
+        return updated;
+      });
+
+      setProgramToDelete(null);
+    } catch (requestError) {
+      setProgramsError(requestError.message || 'Не удалось удалить направление');
+    } finally {
+      setDeletingProgramId(null);
+    }
   };
 
   const handleOpenAddUniversity = () => {
@@ -717,9 +764,10 @@ const AdminPage = () => {
                     <button
                       className={styles.actionBtn}
                       onClick={() => handleDeleteProgram(program.id)}
+                      disabled={deletingProgramId === program.id}
                       title="Удалить"
                     >
-                      🗑
+                      {deletingProgramId === program.id ? '...' : '🗑'}
                     </button>
                   </div>
                 </div>
@@ -1265,6 +1313,48 @@ const AdminPage = () => {
                   disabled={Boolean(deletingUniversityId)}
                 >
                   {deletingUniversityId ? 'Удаление...' : 'Удалить'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {programToDelete && (
+          <div className={styles.modalOverlay} onClick={handleCloseDeleteProgramModal}>
+            <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <h4>Удалить направление</h4>
+                <button
+                  type="button"
+                  className={styles.closeBtn}
+                  onClick={handleCloseDeleteProgramModal}
+                  aria-label="Закрыть"
+                  disabled={Boolean(deletingProgramId)}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className={styles.requiredHint}>
+                Вы уверены, что хотите удалить направление "{programToDelete.name}" ({programToDelete.code})? Это действие нельзя отменить.
+              </div>
+
+              <div className={styles.modalActions}>
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnSecondary}`}
+                  onClick={handleCloseDeleteProgramModal}
+                  disabled={Boolean(deletingProgramId)}
+                >
+                  Отмена
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnDanger}`}
+                  onClick={handleConfirmDeleteProgram}
+                  disabled={Boolean(deletingProgramId)}
+                >
+                  {deletingProgramId ? 'Удаление...' : 'Удалить'}
                 </button>
               </div>
             </div>

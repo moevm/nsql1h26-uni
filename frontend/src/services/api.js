@@ -102,6 +102,15 @@ export async function createProgram(payload, adminId) {
   });
 }
 
+export async function deleteProgram(programId, adminId) {
+  return request(`/programs/${programId}`, {
+    method: 'DELETE',
+    headers: {
+      'x-user-id': adminId,
+    },
+  });
+}
+
 export async function getProgramsByUniversity(universityId, filters = {}) {
   const params = new URLSearchParams({ university_id: universityId });
 
