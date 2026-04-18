@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import styles from './AdminPage.module.css';
-import { createProgram, createUniversity, getPrograms, getUniversities } from '../services/api';
+import {
+  createProgram,
+  createUniversity,
+  deleteUniversity,
+  getPrograms,
+  getUniversities,
+} from '../services/api';
 import { getAdminSession } from '../services/auth';
 
 const PHONE_REGEX = /^\+?[0-9()\-\s]{7,20}$/;
@@ -60,6 +66,8 @@ const AdminPage = () => {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [deletingUniversityId, setDeletingUniversityId] = useState(null);
+  const [universityToDelete, setUniversityToDelete] = useState(null);
   const [programSearchQuery, setProgramSearchQuery] = useState('');
   const [currentProgramPage, setCurrentProgramPage] = useState(1);
   const [isAddUniversityOpen, setIsAddUniversityOpen] = useState(false);
@@ -165,8 +173,51 @@ const AdminPage = () => {
   };
 
   const handleDeleteUniversity = (id) => {
-    console.log('Удаление вуза:', id);
-    // TODO: Реализовать удаление
+    const selectedUniversity = universities.find((item) => item.id === id);
+    setUniversityToDelete({
+      id,
+      name: selectedUniversity?.name || 'без названия',
+    });
+  };
+
+  const handleCloseDeleteUniversityModal = () => {
+    if (deletingUniversityId) {
+      return;
+    }
+    setUniversityToDelete(null);
+  };
+
+  const handleConfirmDeleteUniversity = async () => {
+    if (!universityToDelete?.id) {
+      return;
+    }
+
+    const adminSession = getAdminSession();
+    if (!adminSession?.adminId) {
+      setError('Сессия администратора не найдена. Войдите снова.');
+      setUniversityToDelete(null);
+      return;
+    }
+
+    try {
+      setDeletingUniversityId(universityToDelete.id);
+      setError(null);
+
+      await deleteUniversity(universityToDelete.id, adminSession.adminId);
+
+      setUniversities((prev) => {
+        const updated = prev.filter((item) => item.id !== universityToDelete.id);
+        const newTotalPages = Math.max(1, Math.ceil(updated.length / itemsPerPage));
+        setCurrentPage((prevPage) => Math.min(prevPage, newTotalPages));
+        return updated;
+      });
+
+      setUniversityToDelete(null);
+    } catch (requestError) {
+      setError(requestError.message || 'Не удалось удалить университет');
+    } finally {
+      setDeletingUniversityId(null);
+    }
   };
 
   const handleEditProgram = (id) => {
@@ -548,9 +599,10 @@ const AdminPage = () => {
                     <button
                       className={styles.actionBtn}
                       onClick={() => handleDeleteUniversity(uni.id)}
+                      disabled={deletingUniversityId === uni.id}
                       title="Удалить"
                     >
-                      🗑
+                      {deletingUniversityId === uni.id ? '...' : '🗑'}
                     </button>
                   </div>
                 </div>
@@ -1173,6 +1225,48 @@ const AdminPage = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {universityToDelete && (
+          <div className={styles.modalOverlay} onClick={handleCloseDeleteUniversityModal}>
+            <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <h4>Удалить вуз</h4>
+                <button
+                  type="button"
+                  className={styles.closeBtn}
+                  onClick={handleCloseDeleteUniversityModal}
+                  aria-label="Закрыть"
+                  disabled={Boolean(deletingUniversityId)}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className={styles.requiredHint}>
+                Вы уверены, что хотите удалить вуз "{universityToDelete.name}"? Это действие нельзя отменить.
+              </div>
+
+              <div className={styles.modalActions}>
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnSecondary}`}
+                  onClick={handleCloseDeleteUniversityModal}
+                  disabled={Boolean(deletingUniversityId)}
+                >
+                  Отмена
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnDanger}`}
+                  onClick={handleConfirmDeleteUniversity}
+                  disabled={Boolean(deletingUniversityId)}
+                >
+                  {deletingUniversityId ? 'Удаление...' : 'Удалить'}
+                </button>
+              </div>
             </div>
           </div>
         )}

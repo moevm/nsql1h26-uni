@@ -264,6 +264,11 @@
   border-color: #1e3c5c;
 }
 
+.actionBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .pagination {
   display: flex;
   justify-content: flex-end;
