@@ -264,6 +264,7 @@ const AdminPage = () => {
       setPrograms(transformedData);
       setTotalProgramsCount(response.total);
       setCurrentProgramPage(response.page);
+      setTotalPages(response.pages);
     } catch (err) {
       setProgramsError(err.message || 'Ошибка при загрузке направлений');
       console.error('Ошибка загрузки направлений:', err);
@@ -281,7 +282,7 @@ const AdminPage = () => {
     return university?.name || 'Неизвестный вуз';
   };
 
-  const totalPages = Math.ceil(filteredUniversities.length / itemsPerPage);
+  const [totalPages, setTotalPages] = useState(0);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedUniversities = filteredUniversities.slice(startIndex, startIndex + itemsPerPage);
   const totalProgramPages = Math.ceil(totalProgramsCount / programItemsPerPage);
@@ -1198,7 +1199,7 @@ const AdminPage = () => {
         <input
           className={styles.searchInput}
           placeholder="Поиск направления..."
-          defaultValue={programSearchQuery} // используйте defaultValue вместо value
+          defaultValue={programSearchQuery}
           onChange={(e) => handleProgramSearch(e.target.value)}
         />
 

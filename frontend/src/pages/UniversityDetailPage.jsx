@@ -214,6 +214,7 @@ const UniversityDetailPage = () => {
   const [totalProgramsCount, setTotalProgramsCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 2;
+  const [totalPages, setTotalPages] = useState(0);
 
   const scoreRangeValidationError = useMemo(() => {
     const minValue = minPassingScore === '' ? null : Number(minPassingScore);
@@ -353,15 +354,20 @@ const UniversityDetailPage = () => {
         const normalizedPrograms = response.items.map(normalizeProgram);
         setPrograms(response.items.map(normalizeProgram));
         setTotalProgramsCount(response.total);
+        setTotalPages(response.pages);
       } else {
         setPrograms(Array.isArray(response) ? response.map(normalizeProgram) : []);
         setTotalProgramsCount(Array.isArray(response) ? response.length : 0);
+        setTotalPages(Math.ceil(
+          (Array.isArray(response) ? response.length : 0) / itemsPerPage
+        ));
       }
       setAppliedFiltersSignature(getFiltersSignature(filters));
     } catch (err) {
       setPrograms([]);
       setTotalProgramsCount(0);
       setProgramsError(err.message || 'Не удалось загрузить направления');
+      setTotalPages(0);
     } finally {
       setProgramsLoading(false);
     }
@@ -453,8 +459,6 @@ const UniversityDetailPage = () => {
       document.removeEventListener('mousedown', handleOutsideClick);
     };
   }, []);
-
-  const universityPrograms = programs;
   const subjectOptions = useMemo(() => SUBJECT_OPTIONS, []);
   const educationFormOptions = useMemo(() => EDUCATION_FORM_OPTIONS, []);
 
@@ -466,7 +470,7 @@ const UniversityDetailPage = () => {
   const hasFilterChanges = currentFiltersSignature !== appliedFiltersSignature;
 
 
-  const totalPages = Math.ceil(totalProgramsCount / itemsPerPage);
+
   const startIndex = (currentPage - 1) * itemsPerPage;
 
   const handleResetFilters = () => {
@@ -615,7 +619,7 @@ const UniversityDetailPage = () => {
           <div className={styles.programsHeader}>
             <h3>Направления подготовки</h3>
             <div className={styles.programsCount}>
-              Всего направлений: {universityPrograms.length}
+              Всего направлений: {totalProgramsCount}
             </div>
           </div>
 
@@ -1026,17 +1030,19 @@ const UniversityDetailPage = () => {
               {totalPages > 1 && (
                 <div className={styles.pagination}>
                   <span className={styles.paginationInfo}>
-                    {startIndex + 1}-{Math.min(startIndex + itemsPerPage, totalProgramsCount)} из {totalProgramsCount}
+                    {(currentPage - 1) * itemsPerPage + 1}-
+                    {Math.min(currentPage * itemsPerPage, totalProgramsCount)} из {totalProgramsCount}
                   </span>
                   <div className={styles.pageNumbers}>
                     <button
                       className={styles.pageBtn}
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
                     >
                       ←
                     </button>
 
+                    {/* Генерация кнопок страниц */}
                     {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                       let pageNum;
                       if (totalPages <= 5) {
@@ -1048,7 +1054,6 @@ const UniversityDetailPage = () => {
                       } else {
                         pageNum = currentPage - 2 + i;
                       }
-
                       return (
                         <button
                           key={pageNum}
@@ -1062,7 +1067,7 @@ const UniversityDetailPage = () => {
 
                     <button
                       className={styles.pageBtn}
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
                     >
                       →
