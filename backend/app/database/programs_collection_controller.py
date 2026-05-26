@@ -2,7 +2,7 @@ from bson import ObjectId
 from pymongo.collection import Collection
 import datetime
 from app.database.base_collection_controller import BaseCollectionController
-
+from typing import Optional, Tuple
 
 class ProgramsCollectionController(BaseCollectionController):
     def __init__(self, collection: Collection):
@@ -62,7 +62,7 @@ class ProgramsCollectionController(BaseCollectionController):
                                  paid_places: tuple[int | None, ...] = None,
                                  passing_score: tuple[int | None, ...] = None,
                                  form_of_education: str = None, required_subjects: list = None,
-                                 comment: str = None) -> list:
+                                 comment: str = None, page: int = 1, limit: int = 10) -> Tuple[list, int]:
         """Возвращает список всех найденных программ. Элементы списка - словари со всеми полями.
         name не зависит от регистра, для полей с tuple первое значение - min, второе - max.
         Если какого-то значения нет, то берется верхняя/нижняя границы."""
@@ -122,9 +122,14 @@ class ProgramsCollectionController(BaseCollectionController):
                 "$regex": f"{comment}",
                 "$options": "i"
             }
-        programsInDB = self._collection.find(programFilter)
-        result = [program for program in programsInDB]
-        return result
+        
+        total_count = self._collection.count_documents(programFilter)
+        skip = (page - 1) * limit
+        programs_cursor = self._collection.find(programFilter).skip(skip).limit(limit)
+
+        result = list(programs_cursor)
+
+        return result, total_count
 
     def update_program(self, program_id: str, university_id: str = None, code: str = None, name: str = None,
                        budget_places: int = None,

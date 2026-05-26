@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 
 from app.core.dependencies import get_db_connection
 from app.database.universities_db import UniversitiesDataBase
@@ -34,6 +34,8 @@ async def get_programs(
     max_passing_score: int | None = None,
     form_of_education: str | None = None,
     required_subjects: str | None = None,
+    page: int = Query(1, ge=1, description="Номер страницы"),
+    limit: int = Query(10, ge=1, le=100, description="Количество записей на странице"),
     db: UniversitiesDataBase = Depends(get_db_connection),
 ):
     programs_controller = db.get_programs_collection()
@@ -56,7 +58,7 @@ async def get_programs(
     if required_subjects:
         subjects_list = [subject.strip() for subject in required_subjects.split(",") if subject.strip()]
 
-    programs = programs_controller.find_programs_by_filters(
+    programs, total_count = programs_controller.find_programs_by_filters(
         university_id=university_id,
         name=name,
         budget_places=budget_places,
@@ -64,11 +66,21 @@ async def get_programs(
         passing_score=passing_score,
         form_of_education=form_of_education,
         required_subjects=subjects_list,
+        page=page,
+        limit=limit,
     )
+
     for program in programs:
         program["_id"] = str(program["_id"])
         program["university_id"] = str(program["university_id"])
-    return programs
+    
+    return {
+        "items": programs,
+        "total": total_count,
+        "page": page,
+        "limit": limit,
+        "pages": (total_count + limit - 1) // limit  # количество страниц
+    }
 
 
 @router.get("/{program_id}")
