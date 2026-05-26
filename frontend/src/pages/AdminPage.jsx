@@ -183,6 +183,8 @@ const AdminPage = () => {
   const itemsPerPage = 4;
   const programItemsPerPage = 4;
 
+  const [totalProgramsCount, setTotalProgramsCount] = useState(0);
+
   const fetchUniversities = async () => {
     try {
       setLoading(true);
@@ -207,15 +209,26 @@ const AdminPage = () => {
 
   useEffect(() => {
     fetchUniversities();
-    fetchPrograms();
+    fetchPrograms(currentProgramPage, programItemsPerPage);
   }, []);
 
-  const fetchPrograms = async () => {
+  // useEffect для загрузки при смене страницы
+  useEffect(() => {
+    fetchPrograms(currentProgramPage, programItemsPerPage);
+  }, [currentProgramPage]);
+
+  const fetchPrograms = async (page = 1, limit = 4) => {
     try {
       setProgramsLoading(true);
       setProgramsError(null);
-      const data = await getPrograms();
-      const transformedData = data.map((program) => ({
+      console.log('Загрузка страницы:', page, 'Лимит:', limit);
+      const response = await getPrograms(
+        {},
+        page,
+        limit
+      );
+      console.log('Ответ от сервера:', response);
+      const transformedData = response.items.map((program) => ({
         id: program._id,
         universityId: program.university_id,
         code: program.code || '-',
@@ -227,6 +240,8 @@ const AdminPage = () => {
         updatedAt: program.updatedAt ? new Date(program.updatedAt).toLocaleDateString('ru-RU') : '-',
       }));
       setPrograms(transformedData);
+      setTotalProgramsCount(response.total);
+      setCurrentProgramPage(response.page);
     } catch (err) {
       setProgramsError(err.message || 'Ошибка при загрузке направлений');
       console.error('Ошибка загрузки направлений:', err);
@@ -261,7 +276,7 @@ const AdminPage = () => {
   const totalPages = Math.ceil(filteredUniversities.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedUniversities = filteredUniversities.slice(startIndex, startIndex + itemsPerPage);
-  const totalProgramPages = Math.ceil(filteredPrograms.length / programItemsPerPage);
+  const totalProgramPages = Math.ceil(totalProgramsCount / programItemsPerPage);
   const programStartIndex = (currentProgramPage - 1) * programItemsPerPage;
   const paginatedPrograms = filteredPrograms.slice(programStartIndex, programStartIndex + programItemsPerPage);
 
@@ -377,19 +392,19 @@ const AdminPage = () => {
 
       const requiredSubjects = Array.isArray(program.required_subjects)
         ? program.required_subjects.map((item) => ({
-            subject: item.subject || '',
-            minimum_points:
-              item.minimum_points === null || item.minimum_points === undefined
-                ? ''
-                : String(item.minimum_points),
-            search: item.subject || '',
-          }))
+          subject: item.subject || '',
+          minimum_points:
+            item.minimum_points === null || item.minimum_points === undefined
+              ? ''
+              : String(item.minimum_points),
+          search: item.subject || '',
+        }))
         : Object.entries(program.required_subjects || {}).map(([subject, minimumPoints]) => ({
-            subject,
-            minimum_points:
-              minimumPoints === null || minimumPoints === undefined ? '' : String(minimumPoints),
-            search: subject,
-          }));
+          subject,
+          minimum_points:
+            minimumPoints === null || minimumPoints === undefined ? '' : String(minimumPoints),
+          search: subject,
+        }));
 
       const selectedUniversityName = getUniversityNameById(program.university_id);
 
@@ -557,10 +572,10 @@ const AdminPage = () => {
       required_subjects: prev.required_subjects.map((item, itemIndex) =>
         itemIndex === index
           ? {
-              ...item,
-              [field]: value,
-              ...(field === 'search' ? { subject: '' } : {}),
-            }
+            ...item,
+            [field]: value,
+            ...(field === 'search' ? { subject: '' } : {}),
+          }
           : item
       ),
     }));
@@ -576,10 +591,10 @@ const AdminPage = () => {
       required_subjects: prev.required_subjects.map((item, itemIndex) =>
         itemIndex === index
           ? {
-              ...item,
-              subject,
-              search: subject,
-            }
+            ...item,
+            subject,
+            search: subject,
+          }
           : item
       ),
     }));
@@ -682,7 +697,7 @@ const AdminPage = () => {
     } catch (requestError) {
       setProgramSubmitError(
         requestError.message
-          || (editingProgramId ? 'Не удалось обновить направление' : 'Не удалось создать направление')
+        || (editingProgramId ? 'Не удалось обновить направление' : 'Не удалось создать направление')
       );
     } finally {
       setProgramSubmitLoading(false);
@@ -767,7 +782,7 @@ const AdminPage = () => {
     } catch (requestError) {
       setSubmitError(
         requestError.message
-          || (editingUniversityId ? 'Не удалось обновить университет' : 'Не удалось создать университет')
+        || (editingUniversityId ? 'Не удалось обновить университет' : 'Не удалось создать университет')
       );
     } finally {
       setSubmitLoading(false);
@@ -879,80 +894,80 @@ const AdminPage = () => {
 
   return (
     <div className={styles.container}>
-        <div className={styles.screenTitle}>⚙️ Администрирование</div>
+      <div className={styles.screenTitle}>⚙️ Администрирование</div>
 
-        <div className={styles.importExportCard}>
-          <div className={styles.sectionSubtitle}>📦 Массовый импорт/экспорт данных</div>
-          <div className={styles.importExportGrid}>
-            <div className={styles.importBox}>
-              <div className={styles.boxTitle}>Импорт</div>
-              {importFile ? (
-                <button
-                  type="button"
-                  className={styles.selectedFileName}
-                  onClick={handleImportFileClick}
-                  disabled={importLoading}
-                  title="Нажмите, чтобы выбрать другой файл"
-                >
-                  {importFile.name}
-                </button>
-              ) : (
-                <label className={styles.fileInput} htmlFor="admin-import-file-input">
-                  📁 Нажмите для выбора JSON-файла<br />
-                  <span style={{ fontSize: '0.85rem' }}>
-                    Поддерживаются файлы .json
-                  </span>
-                </label>
-              )}
-              <input
-                ref={importFileInputRef}
-                id="admin-import-file-input"
-                type="file"
-                accept="application/json,.json"
-                onChange={handleImportFileChange}
-                className={styles.hiddenFileInput}
+      <div className={styles.importExportCard}>
+        <div className={styles.sectionSubtitle}>📦 Массовый импорт/экспорт данных</div>
+        <div className={styles.importExportGrid}>
+          <div className={styles.importBox}>
+            <div className={styles.boxTitle}>Импорт</div>
+            {importFile ? (
+              <button
+                type="button"
+                className={styles.selectedFileName}
+                onClick={handleImportFileClick}
                 disabled={importLoading}
-              />
-              <div className={styles.warning}>
-                ⚠️ Все текущие данные будут заменены
-              </div>
-              <details className={styles.adminImportHint}>
-                <summary>Особенности импорта администратора</summary>
-                <p>Импорт не удаляет администратора, под которым вы вошли в систему: эта учетная запись всегда сохраняется.</p>
-                <ul className={styles.importHintList}>
-                  <li>
-                    Для администраторов нужен хэш пароля в поле <code>password_hash</code>; обычный пароль импортировать нельзя.
-                  </li>
-                  <li>
-                    Если в файле есть администратор с тем же <code>username</code>, что и текущий, он не будет продублирован.
-                  </li>
-                  <li>
-                    Если у администраторов совпадет <code>_id</code>, система назначит новый id, чтобы запись не потерялась.
-                  </li>
-                </ul>
-              </details>
-              <details className={styles.importHint}>
-                <summary>Требования к JSON-файлу</summary>
-                <p>Файл должен быть JSON-объектом с секциями: <b>admins</b>, <b>universities</b>, <b>programs</b>.</p>
-                <p>Обязательные поля в элементах массивов:</p>
-                <ul className={styles.importHintList}>
-                  <li>
-                    <b>admins[]:</b> <code>_id</code>, <code>username</code>, <code>password_hash</code>, <code>createdAt</code>
-                  </li>
-                  <li>
-                    <b>universities[]:</b> <code>_id</code>, <code>name</code>, <code>city</code>, <code>has_dormitory</code>, <code>military_dept</code>, <code>website</code>
-                  </li>
-                  <li>
-                    <b>programs[]:</b> <code>_id</code>, <code>university_id</code>, <code>code</code>, <code>name</code>, <code>budget_places</code>, <code>paid_places</code>, <code>passing_score</code>, <code>form_of_education</code>, <code>required_subjects</code>
-                  </li>
-                </ul>
-                <p>
-                  Для сохранения связей все значения <code>programs[].university_id</code> должны существовать среди <code>universities[]._id</code>.
-                </p>
-                <p>
-                  Если необязательные поля отсутствуют, они будут автоматически инициализированы значениями по умолчанию и их можно отредактировать позже.
-                </p>
-                <pre className={styles.importHintCode}>{`{
+                title="Нажмите, чтобы выбрать другой файл"
+              >
+                {importFile.name}
+              </button>
+            ) : (
+              <label className={styles.fileInput} htmlFor="admin-import-file-input">
+                📁 Нажмите для выбора JSON-файла<br />
+                <span style={{ fontSize: '0.85rem' }}>
+                  Поддерживаются файлы .json
+                </span>
+              </label>
+            )}
+            <input
+              ref={importFileInputRef}
+              id="admin-import-file-input"
+              type="file"
+              accept="application/json,.json"
+              onChange={handleImportFileChange}
+              className={styles.hiddenFileInput}
+              disabled={importLoading}
+            />
+            <div className={styles.warning}>
+              ⚠️ Все текущие данные будут заменены
+            </div>
+            <details className={styles.adminImportHint}>
+              <summary>Особенности импорта администратора</summary>
+              <p>Импорт не удаляет администратора, под которым вы вошли в систему: эта учетная запись всегда сохраняется.</p>
+              <ul className={styles.importHintList}>
+                <li>
+                  Для администраторов нужен хэш пароля в поле <code>password_hash</code>; обычный пароль импортировать нельзя.
+                </li>
+                <li>
+                  Если в файле есть администратор с тем же <code>username</code>, что и текущий, он не будет продублирован.
+                </li>
+                <li>
+                  Если у администраторов совпадет <code>_id</code>, система назначит новый id, чтобы запись не потерялась.
+                </li>
+              </ul>
+            </details>
+            <details className={styles.importHint}>
+              <summary>Требования к JSON-файлу</summary>
+              <p>Файл должен быть JSON-объектом с секциями: <b>admins</b>, <b>universities</b>, <b>programs</b>.</p>
+              <p>Обязательные поля в элементах массивов:</p>
+              <ul className={styles.importHintList}>
+                <li>
+                  <b>admins[]:</b> <code>_id</code>, <code>username</code>, <code>password_hash</code>, <code>createdAt</code>
+                </li>
+                <li>
+                  <b>universities[]:</b> <code>_id</code>, <code>name</code>, <code>city</code>, <code>has_dormitory</code>, <code>military_dept</code>, <code>website</code>
+                </li>
+                <li>
+                  <b>programs[]:</b> <code>_id</code>, <code>university_id</code>, <code>code</code>, <code>name</code>, <code>budget_places</code>, <code>paid_places</code>, <code>passing_score</code>, <code>form_of_education</code>, <code>required_subjects</code>
+                </li>
+              </ul>
+              <p>
+                Для сохранения связей все значения <code>programs[].university_id</code> должны существовать среди <code>universities[]._id</code>.
+              </p>
+              <p>
+                Если необязательные поля отсутствуют, они будут автоматически инициализированы значениями по умолчанию и их можно отредактировать позже.
+              </p>
+              <pre className={styles.importHintCode}>{`{
   "meta": { "format": "json", "version": "1.0" },
   "admins": [
     {
@@ -1002,780 +1017,790 @@ const AdminPage = () => {
     }
   ]
 }`}</pre>
-                <p>Рекомендуется импортировать JSON, ранее скачанный через Экспорт.</p>
-                <div className={styles.importHintActions}>
-                  <button
-                    type="button"
-                    className={`${styles.btn} ${styles.btnSecondary}`}
-                    onClick={handleDownloadImportTemplate}
-                  >
-                    Скачать шаблон JSON
-                  </button>
-                </div>
-              </details>
-              <button
-                className={`${styles.btn} ${styles.btnDanger}`}
-                onClick={handleImportAllDataJson}
-                disabled={importLoading}
-              >
-                {importLoading ? 'Импорт...' : 'Загрузить и заменить данные'}
-              </button>
-              {importError && <div className={styles.formError}>❌ {importError}</div>}
-              {importSuccessMessage && (
-                <div className={styles.requiredHint}>✅ {importSuccessMessage}</div>
-              )}
-            </div>
-
-            <div className={styles.exportBox}>
-              <div className={styles.boxTitle}>Экспорт</div>
-              <select
-                className={styles.formatSelect}
-                value={exportFormat}
-                onChange={(event) => setExportFormat(event.target.value)}
-                disabled={exportLoading}
-              >
-                <option value="json">JSON</option>
-                <option value="csv">CSV</option>
-                <option value="xml">XML</option>
-              </select>
-              <button
-                className={`${styles.btn} ${styles.btnPrimary}`}
-                style={{ marginBottom: '10px' }}
-                onClick={handleExportAllData}
-                disabled={exportLoading}
-              >
-                {exportLoading ? 'Экспорт...' : 'Скачать все данные'}
-              </button>
-              {exportError && <div className={styles.formError}>❌ {exportError}</div>}
-              {exportSuccessMessage && (
-                <div className={styles.requiredHint}>✅ {exportSuccessMessage}</div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.managementSection}>
-          <div className={styles.managementHeader}>
-            <h3>🏛 Управление вузами</h3>
-            <button className={styles.addBtn} onClick={handleOpenAddUniversity}>
-              + Добавить вуз
-            </button>
-          </div>
-
-          <input
-            className={styles.searchInput}
-            placeholder="Поиск вуза..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setCurrentPage(1);
-            }}
-          />
-
-          {loading && (
-            <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
-              ⏳ Загрузка вузов...
-            </div>
-          )}
-
-          {error && (
-            <div style={{ textAlign: 'center', padding: '30px', color: '#d32f2f' }}>
-              ❌ {error}
-            </div>
-          )}
-
-          {!loading && !error && universities.length > 0 && (
-            <>
-              <div className={styles.tableHeader}>
-                <span>Название</span>
-                <span>Город</span>
-                <span>Сайт</span>
-                <span>Дата создания</span>
-                <span>Изменен</span>
-                <span>Действия</span>
-              </div>
-
-              {paginatedUniversities.map(uni => (
-                <div key={uni.id} className={styles.uniRow}>
-                  <span>{uni.name}</span>
-                  <span>{uni.city}</span>
-                  <span style={{ fontSize: '0.9rem', color: '#0066cc' }}>
-                    {uni.website !== '-' ? uni.website : '-'}
-                  </span>
-                  <span>{uni.createdAt}</span>
-                  <span>{uni.updatedAt}</span>
-                  <div className={styles.actionBtns}>
-                    <button
-                      className={styles.actionBtn}
-                      onClick={() => handleEditUniversity(uni.id)}
-                      aria-label="Редактировать"
-                      data-tooltip="Редактировать"
-                    >
-                      ✎
-                    </button>
-                    <button
-                      className={styles.actionBtn}
-                      onClick={() => handleDeleteUniversity(uni.id)}
-                      disabled={deletingUniversityId === uni.id}
-                      aria-label="Удалить"
-                      data-tooltip="Удалить"
-                    >
-                      {deletingUniversityId === uni.id ? '...' : '🗑'}
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-              {totalPages > 1 && (
-                <div className={styles.pagination}>
-                  <span style={{ color: '#4b637a' }}>
-                    {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredUniversities.length)} из {filteredUniversities.length}
-                  </span>
-                  <div className={styles.pageNumbers}>
-                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(page => (
-                      <button
-                        key={page}
-                        className={`${styles.pageBtn} ${currentPage === page ? styles.active : ''}`}
-                        onClick={() => setCurrentPage(page)}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    {totalPages > 5 && (
-                      <>
-                        <span className={styles.dots}>⋯</span>
-                        <button
-                          className={styles.pageBtn}
-                          onClick={() => setCurrentPage(totalPages)}
-                        >
-                          {totalPages}
-                        </button>
-                      </>
-                    )}
-                    <button
-                      className={styles.pageBtn}
-                      onClick={() => setCurrentPage(Math.min(currentPage + 1, totalPages))}
-                      disabled={currentPage === totalPages}
-                    >
-                      →
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        <div className={styles.managementSection}>
-          <div className={styles.managementHeader}>
-            <h3>📚 Управление направлениями</h3>
-            <button className={styles.addBtn} onClick={handleOpenAddProgram}>
-              + Добавить направление
-            </button>
-          </div>
-
-          <input
-            className={styles.searchInput}
-            placeholder="Поиск направления..."
-            value={programSearchQuery}
-            onChange={(e) => {
-              setProgramSearchQuery(e.target.value);
-              setCurrentProgramPage(1);
-            }}
-          />
-
-          {programsLoading && (
-            <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
-              ⏳ Загрузка направлений...
-            </div>
-          )}
-
-          {programsError && (
-            <div style={{ textAlign: 'center', padding: '30px', color: '#d32f2f' }}>
-              ❌ {programsError}
-            </div>
-          )}
-
-          {!programsLoading && !programsError && filteredPrograms.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
-              📭 Направления не найдены
-            </div>
-          )}
-
-          {!programsLoading && !programsError && filteredPrograms.length > 0 && (
-            <>
-              <div className={styles.programTableHeader}>
-                <span>Код</span>
-                <span>Название</span>
-                <span>Вуз</span>
-                <span>Форма</span>
-                <span>Балл</span>
-                <span>Места (б/п)</span>
-                <span>Изменен</span>
-                <span>Действия</span>
-              </div>
-
-              {paginatedPrograms.map((program) => (
-                <div key={program.id} className={styles.programRow}>
-                  <span>{program.code}</span>
-                  <span>{program.name}</span>
-                  <span>{getUniversityNameById(program.universityId)}</span>
-                  <span>{program.form}</span>
-                  <span>{program.passingScore}</span>
-                  <span>{program.budgetPlaces}/{program.paidPlaces}</span>
-                  <span>{program.updatedAt}</span>
-                  <div className={styles.actionBtns}>
-                    <button
-                      className={styles.actionBtn}
-                      onClick={() => handleEditProgram(program.id)}
-                      aria-label="Редактировать"
-                      data-tooltip="Редактировать"
-                    >
-                      ✎
-                    </button>
-                    <button
-                      className={styles.actionBtn}
-                      onClick={() => handleDeleteProgram(program.id)}
-                      disabled={deletingProgramId === program.id}
-                      aria-label="Удалить"
-                      data-tooltip="Удалить"
-                    >
-                      {deletingProgramId === program.id ? '...' : '🗑'}
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-              {totalProgramPages > 1 && (
-                <div className={styles.pagination}>
-                  <span style={{ color: '#4b637a' }}>
-                    {programStartIndex + 1}-{Math.min(programStartIndex + programItemsPerPage, filteredPrograms.length)} из {filteredPrograms.length}
-                  </span>
-                  <div className={styles.pageNumbers}>
-                    {Array.from({ length: Math.min(totalProgramPages, 5) }, (_, i) => i + 1).map(page => (
-                      <button
-                        key={page}
-                        className={`${styles.pageBtn} ${currentProgramPage === page ? styles.active : ''}`}
-                        onClick={() => setCurrentProgramPage(page)}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    {totalProgramPages > 5 && (
-                      <>
-                        <span className={styles.dots}>⋯</span>
-                        <button
-                          className={styles.pageBtn}
-                          onClick={() => setCurrentProgramPage(totalProgramPages)}
-                        >
-                          {totalProgramPages}
-                        </button>
-                      </>
-                    )}
-                    <button
-                      className={styles.pageBtn}
-                      onClick={() => setCurrentProgramPage(Math.min(currentProgramPage + 1, totalProgramPages))}
-                      disabled={currentProgramPage === totalProgramPages}
-                    >
-                      →
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        {isAddProgramOpen && (
-          <div className={styles.modalOverlay} onClick={handleCloseAddProgram}>
-            <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
-              <div className={styles.modalHeader}>
-                <h4>{editingProgramId ? 'Редактировать направление' : 'Добавить направление'}</h4>
+              <p>Рекомендуется импортировать JSON, ранее скачанный через Экспорт.</p>
+              <div className={styles.importHintActions}>
                 <button
                   type="button"
-                  className={styles.closeBtn}
-                  onClick={handleCloseAddProgram}
-                  aria-label="Закрыть"
+                  className={`${styles.btn} ${styles.btnSecondary}`}
+                  onClick={handleDownloadImportTemplate}
                 >
-                  ✕
+                  Скачать шаблон JSON
                 </button>
               </div>
+            </details>
+            <button
+              className={`${styles.btn} ${styles.btnDanger}`}
+              onClick={handleImportAllDataJson}
+              disabled={importLoading}
+            >
+              {importLoading ? 'Импорт...' : 'Загрузить и заменить данные'}
+            </button>
+            {importError && <div className={styles.formError}>❌ {importError}</div>}
+            {importSuccessMessage && (
+              <div className={styles.requiredHint}>✅ {importSuccessMessage}</div>
+            )}
+          </div>
 
-              <form className={styles.modalForm} onSubmit={handleSubmitProgram}>
-                <div className={styles.requiredHint}>Поля со * обязательны для заполнения</div>
+          <div className={styles.exportBox}>
+            <div className={styles.boxTitle}>Экспорт</div>
+            <select
+              className={styles.formatSelect}
+              value={exportFormat}
+              onChange={(event) => setExportFormat(event.target.value)}
+              disabled={exportLoading}
+            >
+              <option value="json">JSON</option>
+              <option value="csv">CSV</option>
+              <option value="xml">XML</option>
+            </select>
+            <button
+              className={`${styles.btn} ${styles.btnPrimary}`}
+              style={{ marginBottom: '10px' }}
+              onClick={handleExportAllData}
+              disabled={exportLoading}
+            >
+              {exportLoading ? 'Экспорт...' : 'Скачать все данные'}
+            </button>
+            {exportError && <div className={styles.formError}>❌ {exportError}</div>}
+            {exportSuccessMessage && (
+              <div className={styles.requiredHint}>✅ {exportSuccessMessage}</div>
+            )}
+          </div>
+        </div>
+      </div>
 
-                <div className={styles.autocompleteWrapper}>
-                  <label className={styles.formField}>
-                    <span>Вуз *</span>
-                    <input
-                      type="text"
-                      value={programUniversitySearch}
-                      onChange={(e) => handleProgramUniversitySearchChange(e.target.value)}
-                      onFocus={() => setIsProgramUniversityDropdownOpen(true)}
-                      onBlur={() => setTimeout(() => setIsProgramUniversityDropdownOpen(false), 120)}
-                      placeholder="Начните вводить название вуза..."
-                      required
-                      disabled={programSubmitLoading}
-                    />
-                  </label>
+      <div className={styles.managementSection}>
+        <div className={styles.managementHeader}>
+          <h3>🏛 Управление вузами</h3>
+          <button className={styles.addBtn} onClick={handleOpenAddUniversity}>
+            + Добавить вуз
+          </button>
+        </div>
 
-                  {isProgramUniversityDropdownOpen && programUniversitySearch.trim() !== '' && (
-                    <div className={styles.autocompleteList}>
-                      {programUniversityOptions.length === 0 && (
-                        <div className={styles.autocompleteEmpty}>Ничего не найдено</div>
-                      )}
-                      {programUniversityOptions.map((uni) => (
-                        <button
-                          type="button"
-                          key={uni.id}
-                          className={styles.autocompleteItem}
-                          onMouseDown={() => handleProgramUniversitySelect(uni)}
-                        >
-                          {uni.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+        <input
+          className={styles.searchInput}
+          placeholder="Поиск вуза..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(1);
+          }}
+        />
+
+        {loading && (
+          <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
+            ⏳ Загрузка вузов...
+          </div>
+        )}
+
+        {error && (
+          <div style={{ textAlign: 'center', padding: '30px', color: '#d32f2f' }}>
+            ❌ {error}
+          </div>
+        )}
+
+        {!loading && !error && universities.length > 0 && (
+          <>
+            <div className={styles.tableHeader}>
+              <span>Название</span>
+              <span>Город</span>
+              <span>Сайт</span>
+              <span>Дата создания</span>
+              <span>Изменен</span>
+              <span>Действия</span>
+            </div>
+
+            {paginatedUniversities.map(uni => (
+              <div key={uni.id} className={styles.uniRow}>
+                <span>{uni.name}</span>
+                <span>{uni.city}</span>
+                <span style={{ fontSize: '0.9rem', color: '#0066cc' }}>
+                  {uni.website !== '-' ? uni.website : '-'}
+                </span>
+                <span>{uni.createdAt}</span>
+                <span>{uni.updatedAt}</span>
+                <div className={styles.actionBtns}>
+                  <button
+                    className={styles.actionBtn}
+                    onClick={() => handleEditUniversity(uni.id)}
+                    aria-label="Редактировать"
+                    data-tooltip="Редактировать"
+                  >
+                    ✎
+                  </button>
+                  <button
+                    className={styles.actionBtn}
+                    onClick={() => handleDeleteUniversity(uni.id)}
+                    disabled={deletingUniversityId === uni.id}
+                    aria-label="Удалить"
+                    data-tooltip="Удалить"
+                  >
+                    {deletingUniversityId === uni.id ? '...' : '🗑'}
+                  </button>
                 </div>
+              </div>
+            ))}
 
-                <div className={styles.formGrid}>
-                  <label className={styles.formField}>
-                    <span>Код направления *</span>
-                    <input
-                      type="text"
-                      value={programForm.code}
-                      onChange={(e) => handleProgramFormChange('code', e.target.value)}
-                      placeholder="01.03.02"
-                      required
-                      disabled={programSubmitLoading}
-                    />
-                  </label>
-
-                  <label className={styles.formField}>
-                    <span>Форма обучения *</span>
-                    <select
-                      className={styles.formSelect}
-                      value={programForm.form_of_education}
-                      onChange={(e) => handleProgramFormChange('form_of_education', e.target.value)}
-                      required
-                      disabled={programSubmitLoading}
+            {totalPages > 1 && (
+              <div className={styles.pagination}>
+                <span style={{ color: '#4b637a' }}>
+                  {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredUniversities.length)} из {filteredUniversities.length}
+                </span>
+                <div className={styles.pageNumbers}>
+                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      className={`${styles.pageBtn} ${currentPage === page ? styles.active : ''}`}
+                      onClick={() => setCurrentPage(page)}
                     >
-                      <option value="">Выберите форму обучения</option>
-                      {FORM_OF_EDUCATION_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                      {page}
+                    </button>
+                  ))}
+                  {totalPages > 5 && (
+                    <>
+                      <span className={styles.dots}>⋯</span>
+                      <button
+                        className={styles.pageBtn}
+                        onClick={() => setCurrentPage(totalPages)}
+                      >
+                        {totalPages}
+                      </button>
+                    </>
+                  )}
+                  <button
+                    className={styles.pageBtn}
+                    onClick={() => setCurrentPage(Math.min(currentPage + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                  >
+                    →
+                  </button>
                 </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
 
+      <div className={styles.managementSection}>
+        <div className={styles.managementHeader}>
+          <h3>📚 Управление направлениями</h3>
+          <button className={styles.addBtn} onClick={handleOpenAddProgram}>
+            + Добавить направление
+          </button>
+        </div>
+
+        <input
+          className={styles.searchInput}
+          placeholder="Поиск направления..."
+          value={programSearchQuery}
+          onChange={(e) => {
+            setProgramSearchQuery(e.target.value);
+            setCurrentProgramPage(1);
+          }}
+        />
+
+        {programsLoading && (
+          <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
+            ⏳ Загрузка направлений...
+          </div>
+        )}
+
+        {programsError && (
+          <div style={{ textAlign: 'center', padding: '30px', color: '#d32f2f' }}>
+            ❌ {programsError}
+          </div>
+        )}
+
+        {!programsLoading && !programsError && filteredPrograms.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
+            📭 Направления не найдены
+          </div>
+        )}
+
+        {!programsLoading && !programsError && filteredPrograms.length > 0 && (
+          <>
+            <div className={styles.programTableHeader}>
+              <span>Код</span>
+              <span>Название</span>
+              <span>Вуз</span>
+              <span>Форма</span>
+              <span>Балл</span>
+              <span>Места (б/п)</span>
+              <span>Изменен</span>
+              <span>Действия</span>
+            </div>
+
+            {programs.map((program) => (
+              <div key={program.id} className={styles.programRow}>
+                <span>{program.code}</span>
+                <span>{program.name}</span>
+                <span>{getUniversityNameById(program.universityId)}</span>
+                <span>{program.form}</span>
+                <span>{program.passingScore}</span>
+                <span>{program.budgetPlaces}/{program.paidPlaces}</span>
+                <span>{program.updatedAt}</span>
+                <div className={styles.actionBtns}>
+                  <button
+                    className={styles.actionBtn}
+                    onClick={() => handleEditProgram(program.id)}
+                    aria-label="Редактировать"
+                    data-tooltip="Редактировать"
+                  >
+                    ✎
+                  </button>
+                  <button
+                    className={styles.actionBtn}
+                    onClick={() => handleDeleteProgram(program.id)}
+                    disabled={deletingProgramId === program.id}
+                    aria-label="Удалить"
+                    data-tooltip="Удалить"
+                  >
+                    {deletingProgramId === program.id ? '...' : '🗑'}
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {totalProgramPages > 1 && (
+              <div className={styles.pagination}>
+                <span style={{ color: '#4b637a' }}>
+                  {(currentProgramPage - 1) * programItemsPerPage + 1}-
+                  {Math.min(currentProgramPage * programItemsPerPage, totalProgramsCount)} из {totalProgramsCount}
+                </span>
+                <div className={styles.pageNumbers}>
+                  <button
+                    className={styles.pageBtn}
+                    onClick={() => setCurrentProgramPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentProgramPage === 1}
+                  >
+                    ←
+                  </button>
+                  {Array.from({ length: Math.min(totalProgramPages, 5) }, (_, i) => {
+                    let pageNum;
+                    if (totalProgramPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentProgramPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentProgramPage >= totalProgramPages - 2) {
+                      pageNum = totalProgramPages - 4 + i;
+                    } else {
+                      pageNum = currentProgramPage - 2 + i;
+                    }
+
+                    return (
+                      <button
+                        key={pageNum}
+                        className={`${styles.pageBtn} ${currentProgramPage === pageNum ? styles.active : ''}`}
+                        onClick={() => setCurrentProgramPage(pageNum)}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                  <button
+                    className={styles.pageBtn}
+                    onClick={() => setCurrentProgramPage(prev => Math.min(totalProgramPages, prev + 1))}
+                    disabled={currentProgramPage === totalProgramPages}
+                  >
+                    →
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {isAddProgramOpen && (
+        <div className={styles.modalOverlay} onClick={handleCloseAddProgram}>
+          <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h4>{editingProgramId ? 'Редактировать направление' : 'Добавить направление'}</h4>
+              <button
+                type="button"
+                className={styles.closeBtn}
+                onClick={handleCloseAddProgram}
+                aria-label="Закрыть"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form className={styles.modalForm} onSubmit={handleSubmitProgram}>
+              <div className={styles.requiredHint}>Поля со * обязательны для заполнения</div>
+
+              <div className={styles.autocompleteWrapper}>
                 <label className={styles.formField}>
-                  <span>Название *</span>
+                  <span>Вуз *</span>
                   <input
                     type="text"
-                    value={programForm.name}
-                    onChange={(e) => handleProgramFormChange('name', e.target.value)}
-                    placeholder="Прикладная информатика"
+                    value={programUniversitySearch}
+                    onChange={(e) => handleProgramUniversitySearchChange(e.target.value)}
+                    onFocus={() => setIsProgramUniversityDropdownOpen(true)}
+                    onBlur={() => setTimeout(() => setIsProgramUniversityDropdownOpen(false), 120)}
+                    placeholder="Начните вводить название вуза..."
                     required
                     disabled={programSubmitLoading}
                   />
                 </label>
 
-                <div className={styles.formGrid}>
-                  <label className={styles.formField}>
-                    <span>Бюджетные места *</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={programForm.budget_places}
-                      onChange={(e) => handleProgramFormChange('budget_places', e.target.value)}
-                      required
-                      disabled={programSubmitLoading}
-                    />
-                  </label>
+                {isProgramUniversityDropdownOpen && programUniversitySearch.trim() !== '' && (
+                  <div className={styles.autocompleteList}>
+                    {programUniversityOptions.length === 0 && (
+                      <div className={styles.autocompleteEmpty}>Ничего не найдено</div>
+                    )}
+                    {programUniversityOptions.map((uni) => (
+                      <button
+                        type="button"
+                        key={uni.id}
+                        className={styles.autocompleteItem}
+                        onMouseDown={() => handleProgramUniversitySelect(uni)}
+                      >
+                        {uni.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-                  <label className={styles.formField}>
-                    <span>Платные места *</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={programForm.paid_places}
-                      onChange={(e) => handleProgramFormChange('paid_places', e.target.value)}
-                      required
-                      disabled={programSubmitLoading}
-                    />
-                  </label>
-                </div>
+              <div className={styles.formGrid}>
+                <label className={styles.formField}>
+                  <span>Код направления *</span>
+                  <input
+                    type="text"
+                    value={programForm.code}
+                    onChange={(e) => handleProgramFormChange('code', e.target.value)}
+                    placeholder="01.03.02"
+                    required
+                    disabled={programSubmitLoading}
+                  />
+                </label>
 
                 <label className={styles.formField}>
-                  <span>Проходной балл *</span>
+                  <span>Форма обучения *</span>
+                  <select
+                    className={styles.formSelect}
+                    value={programForm.form_of_education}
+                    onChange={(e) => handleProgramFormChange('form_of_education', e.target.value)}
+                    required
+                    disabled={programSubmitLoading}
+                  >
+                    <option value="">Выберите форму обучения</option>
+                    {FORM_OF_EDUCATION_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <label className={styles.formField}>
+                <span>Название *</span>
+                <input
+                  type="text"
+                  value={programForm.name}
+                  onChange={(e) => handleProgramFormChange('name', e.target.value)}
+                  placeholder="Прикладная информатика"
+                  required
+                  disabled={programSubmitLoading}
+                />
+              </label>
+
+              <div className={styles.formGrid}>
+                <label className={styles.formField}>
+                  <span>Бюджетные места *</span>
                   <input
                     type="number"
                     min="0"
                     step="1"
-                    value={programForm.passing_score}
-                    onChange={(e) => handleProgramFormChange('passing_score', e.target.value)}
+                    value={programForm.budget_places}
+                    onChange={(e) => handleProgramFormChange('budget_places', e.target.value)}
                     required
                     disabled={programSubmitLoading}
                   />
                 </label>
 
                 <label className={styles.formField}>
-                  <span>Предметы и минимальные баллы *</span>
-                  <button
-                    type="button"
-                    className={styles.addInlineBtn}
-                    onClick={handleAddProgramSubject}
+                  <span>Платные места *</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={programForm.paid_places}
+                    onChange={(e) => handleProgramFormChange('paid_places', e.target.value)}
+                    required
                     disabled={programSubmitLoading}
-                  >
-                    + Добавить предмет
-                  </button>
+                  />
                 </label>
+              </div>
 
-                {programForm.required_subjects.length === 0 && (
-                  <div className={styles.requiredHint}>Добавьте хотя бы один предмет.</div>
-                )}
+              <label className={styles.formField}>
+                <span>Проходной балл *</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={programForm.passing_score}
+                  onChange={(e) => handleProgramFormChange('passing_score', e.target.value)}
+                  required
+                  disabled={programSubmitLoading}
+                />
+              </label>
 
-                {programForm.required_subjects.map((item, index) => {
-                  const filteredSubjectOptions = SUBJECT_OPTIONS.filter((subject) =>
-                    subject.toLowerCase().includes(item.search.trim().toLowerCase())
-                  );
+              <label className={styles.formField}>
+                <span>Предметы и минимальные баллы *</span>
+                <button
+                  type="button"
+                  className={styles.addInlineBtn}
+                  onClick={handleAddProgramSubject}
+                  disabled={programSubmitLoading}
+                >
+                  + Добавить предмет
+                </button>
+              </label>
 
-                  return (
-                    <div key={index} className={styles.subjectRow}>
-                      <div className={styles.subjectHeader}>
-                        <span>Предмет {index + 1}</span>
-                        <button
-                          type="button"
-                          className={styles.removeInlineBtn}
-                          onClick={() => handleRemoveProgramSubject(index)}
-                          disabled={programSubmitLoading}
-                        >
-                          Удалить
-                        </button>
-                      </div>
+              {programForm.required_subjects.length === 0 && (
+                <div className={styles.requiredHint}>Добавьте хотя бы один предмет.</div>
+              )}
 
-                      <div className={styles.autocompleteWrapper}>
-                        <label className={styles.formField}>
-                          <span>Название *</span>
-                          <input
-                            type="text"
-                            value={item.search}
-                            onChange={(e) => handleProgramSubjectChange(index, 'search', e.target.value)}
-                            onFocus={() => setActiveSubjectDropdownIndex(index)}
-                            onBlur={() => setTimeout(() => setActiveSubjectDropdownIndex(null), 120)}
-                            placeholder="Начните вводить название предмета..."
-                            required
-                            disabled={programSubmitLoading}
-                          />
-                        </label>
+              {programForm.required_subjects.map((item, index) => {
+                const filteredSubjectOptions = SUBJECT_OPTIONS.filter((subject) =>
+                  subject.toLowerCase().includes(item.search.trim().toLowerCase())
+                );
 
-                        {activeSubjectDropdownIndex === index && item.search.trim() !== '' && (
-                          <div className={styles.autocompleteList}>
-                            {filteredSubjectOptions.length === 0 && (
-                              <div className={styles.autocompleteEmpty}>Ничего не найдено</div>
-                            )}
-                            {filteredSubjectOptions.map((subject) => (
-                              <button
-                                type="button"
-                                key={subject}
-                                className={styles.autocompleteItem}
-                                onMouseDown={() => handleProgramSubjectSelect(index, subject)}
-                              >
-                                {subject}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                return (
+                  <div key={index} className={styles.subjectRow}>
+                    <div className={styles.subjectHeader}>
+                      <span>Предмет {index + 1}</span>
+                      <button
+                        type="button"
+                        className={styles.removeInlineBtn}
+                        onClick={() => handleRemoveProgramSubject(index)}
+                        disabled={programSubmitLoading}
+                      >
+                        Удалить
+                      </button>
+                    </div>
 
+                    <div className={styles.autocompleteWrapper}>
                       <label className={styles.formField}>
-                        <span>Минимальный балл *</span>
+                        <span>Название *</span>
                         <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="1"
-                          value={item.minimum_points}
-                          onChange={(e) => handleProgramSubjectChange(index, 'minimum_points', e.target.value)}
+                          type="text"
+                          value={item.search}
+                          onChange={(e) => handleProgramSubjectChange(index, 'search', e.target.value)}
+                          onFocus={() => setActiveSubjectDropdownIndex(index)}
+                          onBlur={() => setTimeout(() => setActiveSubjectDropdownIndex(null), 120)}
+                          placeholder="Начните вводить название предмета..."
                           required
                           disabled={programSubmitLoading}
                         />
                       </label>
+
+                      {activeSubjectDropdownIndex === index && item.search.trim() !== '' && (
+                        <div className={styles.autocompleteList}>
+                          {filteredSubjectOptions.length === 0 && (
+                            <div className={styles.autocompleteEmpty}>Ничего не найдено</div>
+                          )}
+                          {filteredSubjectOptions.map((subject) => (
+                            <button
+                              type="button"
+                              key={subject}
+                              className={styles.autocompleteItem}
+                              onMouseDown={() => handleProgramSubjectSelect(index, subject)}
+                            >
+                              {subject}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  );
-                })}
 
-                <label className={styles.formField}>
-                  <span>Комментарий</span>
-                  <textarea
-                    value={programForm.comment}
-                    onChange={(e) => handleProgramFormChange('comment', e.target.value)}
-                    placeholder="Комментарий к направлению"
-                    rows={3}
-                    disabled={programSubmitLoading}
-                  />
-                </label>
+                    <label className={styles.formField}>
+                      <span>Минимальный балл *</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={item.minimum_points}
+                        onChange={(e) => handleProgramSubjectChange(index, 'minimum_points', e.target.value)}
+                        required
+                        disabled={programSubmitLoading}
+                      />
+                    </label>
+                  </div>
+                );
+              })}
 
-                {programSubmitError && <div className={styles.formError}>❌ {programSubmitError}</div>}
+              <label className={styles.formField}>
+                <span>Комментарий</span>
+                <textarea
+                  value={programForm.comment}
+                  onChange={(e) => handleProgramFormChange('comment', e.target.value)}
+                  placeholder="Комментарий к направлению"
+                  rows={3}
+                  disabled={programSubmitLoading}
+                />
+              </label>
 
-                <div className={styles.modalActions}>
-                  <button
-                    type="button"
-                    className={`${styles.btn} ${styles.btnSecondary}`}
-                    onClick={handleCloseAddProgram}
-                    disabled={programSubmitLoading}
-                  >
-                    Отмена
-                  </button>
-                  <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={programSubmitLoading}>
-                    {programSubmitLoading
-                      ? (editingProgramId ? 'Сохранение...' : 'Создание...')
-                      : (editingProgramId ? 'Сохранить изменения' : 'Создать направление')}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+              {programSubmitError && <div className={styles.formError}>❌ {programSubmitError}</div>}
 
-        {isAddUniversityOpen && (
-          <div className={styles.modalOverlay} onClick={handleCloseAddUniversity}>
-            <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
-              <div className={styles.modalHeader}>
-                <h4>{editingUniversityId ? 'Редактировать вуз' : 'Добавить вуз'}</h4>
+              <div className={styles.modalActions}>
                 <button
                   type="button"
-                  className={styles.closeBtn}
-                  onClick={handleCloseAddUniversity}
-                  aria-label="Закрыть"
+                  className={`${styles.btn} ${styles.btnSecondary}`}
+                  onClick={handleCloseAddProgram}
+                  disabled={programSubmitLoading}
                 >
-                  ✕
+                  Отмена
+                </button>
+                <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={programSubmitLoading}>
+                  {programSubmitLoading
+                    ? (editingProgramId ? 'Сохранение...' : 'Создание...')
+                    : (editingProgramId ? 'Сохранить изменения' : 'Создать направление')}
                 </button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
 
-              <form className={styles.modalForm} onSubmit={handleSubmitUniversity}>
-                <div className={styles.requiredHint}>Поля со * обязательны для заполнения</div>
+      {isAddUniversityOpen && (
+        <div className={styles.modalOverlay} onClick={handleCloseAddUniversity}>
+          <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h4>{editingUniversityId ? 'Редактировать вуз' : 'Добавить вуз'}</h4>
+              <button
+                type="button"
+                className={styles.closeBtn}
+                onClick={handleCloseAddUniversity}
+                aria-label="Закрыть"
+              >
+                ✕
+              </button>
+            </div>
 
+            <form className={styles.modalForm} onSubmit={handleSubmitUniversity}>
+              <div className={styles.requiredHint}>Поля со * обязательны для заполнения</div>
+
+              <label className={styles.formField}>
+                <span>Название *</span>
+                <input
+                  type="text"
+                  value={universityForm.name}
+                  onChange={(e) => handleFormChange('name', e.target.value)}
+                  placeholder="Например, МГУ"
+                  required
+                  disabled={submitLoading}
+                />
+              </label>
+
+              <label className={styles.formField}>
+                <span>Город *</span>
+                <input
+                  type="text"
+                  value={universityForm.city}
+                  onChange={(e) => handleFormChange('city', e.target.value)}
+                  placeholder="Москва"
+                  required
+                  disabled={submitLoading}
+                />
+              </label>
+
+              <label className={styles.formField}>
+                <span>Адрес</span>
+                <input
+                  type="text"
+                  value={universityForm.address}
+                  onChange={(e) => handleFormChange('address', e.target.value)}
+                  placeholder="ул. Ленина, 1"
+                  disabled={submitLoading}
+                />
+              </label>
+
+              <label className={styles.formField}>
+                <span>Сайт *</span>
+                <input
+                  type="url"
+                  value={universityForm.website}
+                  onChange={(e) => handleFormChange('website', e.target.value)}
+                  placeholder="https://example.ru"
+                  required
+                  disabled={submitLoading}
+                />
+              </label>
+
+              <div className={styles.formGrid}>
                 <label className={styles.formField}>
-                  <span>Название *</span>
-                  <input
-                    type="text"
-                    value={universityForm.name}
-                    onChange={(e) => handleFormChange('name', e.target.value)}
-                    placeholder="Например, МГУ"
-                    required
-                    disabled={submitLoading}
-                  />
-                </label>
-
-                <label className={styles.formField}>
-                  <span>Город *</span>
-                  <input
-                    type="text"
-                    value={universityForm.city}
-                    onChange={(e) => handleFormChange('city', e.target.value)}
-                    placeholder="Москва"
-                    required
-                    disabled={submitLoading}
-                  />
-                </label>
-
-                <label className={styles.formField}>
-                  <span>Адрес</span>
-                  <input
-                    type="text"
-                    value={universityForm.address}
-                    onChange={(e) => handleFormChange('address', e.target.value)}
-                    placeholder="ул. Ленина, 1"
-                    disabled={submitLoading}
-                  />
-                </label>
-
-                <label className={styles.formField}>
-                  <span>Сайт *</span>
-                  <input
-                    type="url"
-                    value={universityForm.website}
-                    onChange={(e) => handleFormChange('website', e.target.value)}
-                    placeholder="https://example.ru"
-                    required
-                    disabled={submitLoading}
-                  />
-                </label>
-
-                <div className={styles.formGrid}>
-                  <label className={styles.formField}>
-                    <span>Год основания</span>
-                    <input
-                      type="number"
-                      min="0"
-                      value={universityForm.foundation_year}
-                      onChange={(e) => handleFormChange('foundation_year', e.target.value)}
-                      placeholder="1755"
-                      disabled={submitLoading}
-                    />
-                  </label>
-
-                  <label className={styles.formField}>
-                    <span>Студентов</span>
-                    <input
-                      type="number"
-                      min="0"
-                      value={universityForm.students_count}
-                      onChange={(e) => handleFormChange('students_count', e.target.value)}
-                      placeholder="40000"
-                      disabled={submitLoading}
-                    />
-                  </label>
-                </div>
-
-                <div className={styles.formGrid}>
-                  <label className={styles.formField}>
-                    <span>Факультетов</span>
-                    <input
-                      type="number"
-                      min="0"
-                      value={universityForm.faculties_count}
-                      onChange={(e) => handleFormChange('faculties_count', e.target.value)}
-                      placeholder="15"
-                      disabled={submitLoading}
-                    />
-                  </label>
-
-                  <label className={styles.formField}>
-                    <span>Рейтинг</span>
-                    <input
-                      type="number"
-                      min="0"
-                      max="5"
-                      step="0.1"
-                      value={universityForm.rating}
-                      onChange={(e) => handleFormChange('rating', e.target.value)}
-                      placeholder="4.7"
-                      disabled={submitLoading}
-                    />
-                  </label>
-                </div>
-
-                <div className={styles.formGrid}>
-                  <label className={styles.formField}>
-                    <span>Телефон</span>
-                    <input
-                      type="text"
-                      value={universityForm.phone}
-                      onChange={(e) => handleFormChange('phone', e.target.value)}
-                      placeholder="+7 (495) 123-45-67"
-                      title="Введите телефон в формате +7 (495) 123-45-67"
-                      disabled={submitLoading}
-                    />
-                  </label>
-
-                  <label className={styles.formField}>
-                    <span>Email</span>
-                    <input
-                      type="email"
-                      value={universityForm.email}
-                      onChange={(e) => handleFormChange('email', e.target.value)}
-                      placeholder="info@university.ru"
-                      disabled={submitLoading}
-                    />
-                  </label>
-                </div>
-
-                <label className={styles.formField}>
-                  <span>Количество направлений</span>
+                  <span>Год основания</span>
                   <input
                     type="number"
                     min="0"
-                    value={universityForm.programs_count}
-                    onChange={(e) => handleFormChange('programs_count', e.target.value)}
-                    placeholder="0"
+                    value={universityForm.foundation_year}
+                    onChange={(e) => handleFormChange('foundation_year', e.target.value)}
+                    placeholder="1755"
                     disabled={submitLoading}
                   />
                 </label>
 
                 <label className={styles.formField}>
-                  <span>Комментарий</span>
-                  <textarea
-                    value={universityForm.comment}
-                    onChange={(e) => handleFormChange('comment', e.target.value)}
-                    placeholder="Короткая заметка"
-                    rows={3}
+                  <span>Студентов</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={universityForm.students_count}
+                    onChange={(e) => handleFormChange('students_count', e.target.value)}
+                    placeholder="40000"
+                    disabled={submitLoading}
+                  />
+                </label>
+              </div>
+
+              <div className={styles.formGrid}>
+                <label className={styles.formField}>
+                  <span>Факультетов</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={universityForm.faculties_count}
+                    onChange={(e) => handleFormChange('faculties_count', e.target.value)}
+                    placeholder="15"
                     disabled={submitLoading}
                   />
                 </label>
 
-                <div className={styles.checkboxRow}>
-                  <label className={styles.checkboxField}>
-                    <input
-                      type="checkbox"
-                      checked={universityForm.has_dormitory}
-                      onChange={(e) => handleFormChange('has_dormitory', e.target.checked)}
-                      disabled={submitLoading}
-                    />
-                    <span>Есть общежитие</span>
-                  </label>
-
-                  <label className={styles.checkboxField}>
-                    <input
-                      type="checkbox"
-                      checked={universityForm.military_dept}
-                      onChange={(e) => handleFormChange('military_dept', e.target.checked)}
-                      disabled={submitLoading}
-                    />
-                    <span>Есть военная кафедра</span>
-                  </label>
-                </div>
-
-                {submitError && <div className={styles.formError}>❌ {submitError}</div>}
-
-                <div className={styles.modalActions}>
-                  <button
-                    type="button"
-                    className={`${styles.btn} ${styles.btnSecondary}`}
-                    onClick={handleCloseAddUniversity}
+                <label className={styles.formField}>
+                  <span>Рейтинг</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="5"
+                    step="0.1"
+                    value={universityForm.rating}
+                    onChange={(e) => handleFormChange('rating', e.target.value)}
+                    placeholder="4.7"
                     disabled={submitLoading}
-                  >
-                    Отмена
-                  </button>
-                  <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={submitLoading}>
-                    {submitLoading
-                      ? (editingUniversityId ? 'Сохранение...' : 'Создание...')
-                      : (editingUniversityId ? 'Сохранить изменения' : 'Создать вуз')}
-                  </button>
-                </div>
-              </form>
-            </div>
+                  />
+                </label>
+              </div>
+
+              <div className={styles.formGrid}>
+                <label className={styles.formField}>
+                  <span>Телефон</span>
+                  <input
+                    type="text"
+                    value={universityForm.phone}
+                    onChange={(e) => handleFormChange('phone', e.target.value)}
+                    placeholder="+7 (495) 123-45-67"
+                    title="Введите телефон в формате +7 (495) 123-45-67"
+                    disabled={submitLoading}
+                  />
+                </label>
+
+                <label className={styles.formField}>
+                  <span>Email</span>
+                  <input
+                    type="email"
+                    value={universityForm.email}
+                    onChange={(e) => handleFormChange('email', e.target.value)}
+                    placeholder="info@university.ru"
+                    disabled={submitLoading}
+                  />
+                </label>
+              </div>
+
+              <label className={styles.formField}>
+                <span>Количество направлений</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={universityForm.programs_count}
+                  onChange={(e) => handleFormChange('programs_count', e.target.value)}
+                  placeholder="0"
+                  disabled={submitLoading}
+                />
+              </label>
+
+              <label className={styles.formField}>
+                <span>Комментарий</span>
+                <textarea
+                  value={universityForm.comment}
+                  onChange={(e) => handleFormChange('comment', e.target.value)}
+                  placeholder="Короткая заметка"
+                  rows={3}
+                  disabled={submitLoading}
+                />
+              </label>
+
+              <div className={styles.checkboxRow}>
+                <label className={styles.checkboxField}>
+                  <input
+                    type="checkbox"
+                    checked={universityForm.has_dormitory}
+                    onChange={(e) => handleFormChange('has_dormitory', e.target.checked)}
+                    disabled={submitLoading}
+                  />
+                  <span>Есть общежитие</span>
+                </label>
+
+                <label className={styles.checkboxField}>
+                  <input
+                    type="checkbox"
+                    checked={universityForm.military_dept}
+                    onChange={(e) => handleFormChange('military_dept', e.target.checked)}
+                    disabled={submitLoading}
+                  />
+                  <span>Есть военная кафедра</span>
+                </label>
+              </div>
+
+              {submitError && <div className={styles.formError}>❌ {submitError}</div>}
+
+              <div className={styles.modalActions}>
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnSecondary}`}
+                  onClick={handleCloseAddUniversity}
+                  disabled={submitLoading}
+                >
+                  Отмена
+                </button>
+                <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={submitLoading}>
+                  {submitLoading
+                    ? (editingUniversityId ? 'Сохранение...' : 'Создание...')
+                    : (editingUniversityId ? 'Сохранить изменения' : 'Создать вуз')}
+                </button>
+              </div>
+            </form>
           </div>
-        )}
+        </div>
+      )}
 
-        <ConfirmModal
-          isOpen={Boolean(universityToDelete)}
-          title={DELETE_UNIVERSITY_TITLE}
-          message={getDeleteUniversityMessage(universityToDelete?.name || '')}
-          confirmText={DELETE_CONFIRM_TEXT}
-          cancelText={DELETE_CANCEL_TEXT}
-          isLoading={Boolean(deletingUniversityId)}
-          onConfirm={handleConfirmDeleteUniversity}
-          onClose={handleCloseDeleteUniversityModal}
-        />
+      <ConfirmModal
+        isOpen={Boolean(universityToDelete)}
+        title={DELETE_UNIVERSITY_TITLE}
+        message={getDeleteUniversityMessage(universityToDelete?.name || '')}
+        confirmText={DELETE_CONFIRM_TEXT}
+        cancelText={DELETE_CANCEL_TEXT}
+        isLoading={Boolean(deletingUniversityId)}
+        onConfirm={handleConfirmDeleteUniversity}
+        onClose={handleCloseDeleteUniversityModal}
+      />
 
-        <ConfirmModal
-          isOpen={Boolean(programToDelete)}
-          title={DELETE_PROGRAM_TITLE}
-          message={getDeleteProgramMessage(programToDelete?.name || '', programToDelete?.code || '-')}
-          confirmText={DELETE_CONFIRM_TEXT}
-          cancelText={DELETE_CANCEL_TEXT}
-          isLoading={Boolean(deletingProgramId)}
-          onConfirm={handleConfirmDeleteProgram}
-          onClose={handleCloseDeleteProgramModal}
-        />
-      </div>
-    );
-  };
-  
-  export default AdminPage;
+      <ConfirmModal
+        isOpen={Boolean(programToDelete)}
+        title={DELETE_PROGRAM_TITLE}
+        message={getDeleteProgramMessage(programToDelete?.name || '', programToDelete?.code || '-')}
+        confirmText={DELETE_CONFIRM_TEXT}
+        cancelText={DELETE_CANCEL_TEXT}
+        isLoading={Boolean(deletingProgramId)}
+        onConfirm={handleConfirmDeleteProgram}
+        onClose={handleCloseDeleteProgramModal}
+      />
+    </div>
+  );
+};
+
+export default AdminPage;

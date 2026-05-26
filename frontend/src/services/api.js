@@ -51,8 +51,11 @@ export async function getProgram(id) {
   return request(`/programs/${id}`);
 }
 
-export async function getPrograms(filters = {}) {
+export async function getPrograms(filters = {}, page = 1, limit = 10) {
   const params = new URLSearchParams();
+
+  params.set('page', String(page));
+  params.set('limit', String(limit));
 
   Object.entries(filters).forEach(([key, value]) => {
     if (value === undefined || value === null || value === '') {
@@ -70,7 +73,9 @@ export async function getPrograms(filters = {}) {
   });
 
   const query = params.toString();
-  return request(query ? `/programs/?${query}` : '/programs/');
+  const response = await request(query ? `/programs/?${query}` : '/programs/');
+
+  return response;
 }
 
 export async function createUniversity(payload, adminId) {
