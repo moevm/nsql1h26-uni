@@ -211,9 +211,9 @@ const UniversityDetailPage = () => {
   const paidDropdownRef = useRef(null);
   const educationFormDropdownRef = useRef(null);
   const subjectDropdownRef = useRef(null);
-
+  const [totalProgramsCount, setTotalProgramsCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4;
+  const itemsPerPage = 2;
 
   const scoreRangeValidationError = useMemo(() => {
     const minValue = minPassingScore === '' ? null : Number(minPassingScore);
@@ -343,22 +343,37 @@ const UniversityDetailPage = () => {
     return filters;
   };
 
-  const fetchPrograms = async (filters = {}) => {
+  const fetchPrograms = async (filters = {}, page = 1, limit = itemsPerPage) => {
     setProgramsLoading(true);
     setProgramsError(null);
 
     try {
-      const programsData = await getProgramsByUniversity(id, filters);
-      setPrograms(Array.isArray(programsData) ? programsData.map(normalizeProgram) : []);
+      const response = await getProgramsByUniversity(id, filters, page, limit);
+      if (response && typeof response === 'object' && 'items' in response) {
+        const normalizedPrograms = response.items.map(normalizeProgram);
+        setPrograms(response.items.map(normalizeProgram));
+        setTotalProgramsCount(response.total);
+      } else {
+        setPrograms(Array.isArray(response) ? response.map(normalizeProgram) : []);
+        setTotalProgramsCount(Array.isArray(response) ? response.length : 0);
+      }
       setAppliedFiltersSignature(getFiltersSignature(filters));
-      setCurrentPage(1);
     } catch (err) {
       setPrograms([]);
+      setTotalProgramsCount(0);
       setProgramsError(err.message || 'Не удалось загрузить направления');
     } finally {
       setProgramsLoading(false);
     }
   };
+
+
+  useEffect(() => {
+    if (id && !loading) {
+      const filters = buildProgramsFilters();
+      fetchPrograms(filters, currentPage, itemsPerPage);
+    }
+  }, [id, currentPage]);
 
   useEffect(() => {
     let isMounted = true;
@@ -450,12 +465,10 @@ const UniversityDetailPage = () => {
   const currentFiltersSignature = getFiltersSignature(buildProgramsFilters());
   const hasFilterChanges = currentFiltersSignature !== appliedFiltersSignature;
 
-  const filteredPrograms = universityPrograms;
-  
-  const totalPages = Math.ceil(filteredPrograms.length / itemsPerPage);
+
+  const totalPages = Math.ceil(totalProgramsCount / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedPrograms = filteredPrograms.slice(startIndex, startIndex + itemsPerPage);
-  
+
   const handleResetFilters = () => {
     setSearchQuery('');
     setMinBudgetPlaces('');
@@ -473,10 +486,20 @@ const UniversityDetailPage = () => {
     setSubjectSearchQuery('');
     setSelectedSubjects([]);
     fetchPrograms();
+
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    } else {
+      fetchPrograms({}, 1, itemsPerPage);
+    }
   };
 
   const handleApplyFilters = () => {
-    fetchPrograms(buildProgramsFilters());
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    } else {
+      fetchPrograms(buildProgramsFilters(), 1, itemsPerPage);
+    }
   };
 
   const toggleSubject = (subject) => {
@@ -489,7 +512,7 @@ const UniversityDetailPage = () => {
     });
     setCurrentPage(1);
   };
-  
+
   const handleProgramClick = (programId) => {
     navigate(`/program/${programId}`);
   };
@@ -947,7 +970,7 @@ const UniversityDetailPage = () => {
             </div>
           </div>
 
-          {filteredPrograms.length === 0 ? (
+          {programs.length === 0 ? (
             <div className={styles.emptyPrograms}>
               😕 По вашему запросу ничего не найдено
             </div>
@@ -964,7 +987,7 @@ const UniversityDetailPage = () => {
                   <span></span>
                 </div>
 
-                {paginatedPrograms.map(program => {
+                {programs.map(program => {
                   const subjectBadges = getProgramSubjectBadges(program);
 
                   return (
@@ -1003,32 +1026,43 @@ const UniversityDetailPage = () => {
               {totalPages > 1 && (
                 <div className={styles.pagination}>
                   <span className={styles.paginationInfo}>
-                    {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredPrograms.length)} из {filteredPrograms.length}
+                    {startIndex + 1}-{Math.min(startIndex + itemsPerPage, totalProgramsCount)} из {totalProgramsCount}
                   </span>
                   <div className={styles.pageNumbers}>
-                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(page => (
-                      <button
-                        key={page}
-                        className={`${styles.pageBtn} ${currentPage === page ? styles.active : ''}`}
-                        onClick={() => setCurrentPage(page)}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    {totalPages > 5 && (
-                      <>
-                        <span className={styles.dots}>⋯</span>
-                        <button
-                          className={styles.pageBtn}
-                          onClick={() => setCurrentPage(totalPages)}
-                        >
-                          {totalPages}
-                        </button>
-                      </>
-                    )}
                     <button
                       className={styles.pageBtn}
-                      onClick={() => setCurrentPage(Math.min(currentPage + 1, totalPages))}
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      ←
+                    </button>
+
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+
+                      return (
+                        <button
+                          key={pageNum}
+                          className={`${styles.pageBtn} ${currentPage === pageNum ? styles.active : ''}`}
+                          onClick={() => setCurrentPage(pageNum)}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      className={styles.pageBtn}
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                       disabled={currentPage === totalPages}
                     >
                       →

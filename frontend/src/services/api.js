@@ -136,9 +136,13 @@ export async function updateProgram(programId, payload, adminId) {
   });
 }
 
-export async function getProgramsByUniversity(universityId, filters = {}) {
+
+export async function getProgramsByUniversity(universityId, filters = {}, page = 1, limit = 10) {
   const params = new URLSearchParams({ university_id: universityId });
 
+  params.set('page', String(page));
+  params.set('limit', String(limit));
+  
   Object.entries(filters).forEach(([key, value]) => {
     if (value === undefined || value === null || value === '') {
       return;

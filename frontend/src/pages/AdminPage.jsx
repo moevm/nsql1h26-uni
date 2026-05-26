@@ -185,6 +185,20 @@ const AdminPage = () => {
 
   const [totalProgramsCount, setTotalProgramsCount] = useState(0);
 
+  const debounceTimeoutRef = useRef(null);
+
+
+  const handleProgramSearch = (value) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    debounceTimeoutRef.current = setTimeout(() => {
+      setProgramSearchQuery(value);
+      setCurrentProgramPage(1);
+    }, 500);
+  };
+
   const fetchUniversities = async () => {
     try {
       setLoading(true);
@@ -214,16 +228,24 @@ const AdminPage = () => {
 
   // useEffect для загрузки при смене страницы
   useEffect(() => {
-    fetchPrograms(currentProgramPage, programItemsPerPage);
-  }, [currentProgramPage]);
+    fetchPrograms(currentProgramPage, programItemsPerPage, programSearchQuery);
+  }, [currentProgramPage, programSearchQuery]);
 
-  const fetchPrograms = async (page = 1, limit = 4) => {
+  const fetchPrograms = async (page = 1, limit = 4, searchQuery = '') => {
     try {
       setProgramsLoading(true);
       setProgramsError(null);
       console.log('Загрузка страницы:', page, 'Лимит:', limit);
+      console.log("programSearchQuery " + searchQuery)
+      console.log("programSearchQuery " + programSearchQuery)
+
+      const filters = {};
+
+      if (searchQuery && searchQuery.trim()) {
+        filters.name = searchQuery.trim();
+      }
       const response = await getPrograms(
-        {},
+        filters,
         page,
         limit
       );
@@ -259,26 +281,10 @@ const AdminPage = () => {
     return university?.name || 'Неизвестный вуз';
   };
 
-  const filteredPrograms = programs.filter((program) => {
-    const query = programSearchQuery.trim().toLowerCase();
-    if (!query) {
-      return true;
-    }
-
-    const universityName = getUniversityNameById(program.universityId).toLowerCase();
-    return (
-      program.name.toLowerCase().includes(query)
-      || program.code.toLowerCase().includes(query)
-      || universityName.includes(query)
-    );
-  });
-
   const totalPages = Math.ceil(filteredUniversities.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedUniversities = filteredUniversities.slice(startIndex, startIndex + itemsPerPage);
   const totalProgramPages = Math.ceil(totalProgramsCount / programItemsPerPage);
-  const programStartIndex = (currentProgramPage - 1) * programItemsPerPage;
-  const paginatedPrograms = filteredPrograms.slice(programStartIndex, programStartIndex + programItemsPerPage);
 
   const handleEditUniversity = async (id) => {
     try {
@@ -1192,11 +1198,8 @@ const AdminPage = () => {
         <input
           className={styles.searchInput}
           placeholder="Поиск направления..."
-          value={programSearchQuery}
-          onChange={(e) => {
-            setProgramSearchQuery(e.target.value);
-            setCurrentProgramPage(1);
-          }}
+          defaultValue={programSearchQuery} // используйте defaultValue вместо value
+          onChange={(e) => handleProgramSearch(e.target.value)}
         />
 
         {programsLoading && (
@@ -1211,13 +1214,13 @@ const AdminPage = () => {
           </div>
         )}
 
-        {!programsLoading && !programsError && filteredPrograms.length === 0 && (
+        {!programsLoading && !programsError && programs.length === 0 && (
           <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
             📭 Направления не найдены
           </div>
         )}
 
-        {!programsLoading && !programsError && filteredPrograms.length > 0 && (
+        {!programsLoading && !programsError && programs.length > 0 && (
           <>
             <div className={styles.programTableHeader}>
               <span>Код</span>
