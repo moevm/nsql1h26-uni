@@ -135,8 +135,9 @@ def get_all_collections_data(db: UniversitiesDataBase) -> tuple[list, list, list
         raise HTTPException(status_code=500, detail="База данных недоступна")
 
     admins = serialize_mongo_value(admins_controller.find_all_admins())
-    universities = serialize_mongo_value(universities_controller.find_universities_by_filters())
-    programs = serialize_mongo_value(programs_controller.find_programs_by_filters())
+    universities = serialize_mongo_value(universities_controller.find_all_universities())
+    programs = serialize_mongo_value(programs_controller.find_all_programs())
+    
     return admins, universities, programs
 
 

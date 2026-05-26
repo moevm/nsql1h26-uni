@@ -131,6 +131,12 @@ class ProgramsCollectionController(BaseCollectionController):
 
         return result, total_count
 
+    def find_all_programs(self) -> list:
+        """Возвращает все программы без пагинации (для экспорта)"""
+        if not self._check_collection():
+            return []
+        return list(self._collection.find())
+    
     def update_program(self, program_id: str, university_id: str = None, code: str = None, name: str = None,
                        budget_places: int = None,
                        paid_places: int = None, passing_score: int = None, form_of_education: str = None,

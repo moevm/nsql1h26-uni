@@ -44,6 +44,12 @@ class UniversitiesCollectionController(BaseCollectionController):
             print("Error add university:", e)
             return None
 
+    def find_all_universities(self) -> list:
+        """Возвращает все университеты без пагинации (для экспорта)"""
+        if not self._check_collection():
+            return []
+        return list(self._collection.find())
+    
     def find_university_by_name(self, name: str) -> dict | None:
         """Возвращает все поля найденного университета в виде словаря.
         Или None, если не удалось найти. Name не зависит от регистра."""
