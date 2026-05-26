@@ -28,9 +28,12 @@ export async function loginAdmin(payload) {
   });
 }
 
-export async function getUniversities(filters = {}) {
+export async function getUniversities(filters = {}, page = 1, limit = 10) {
   const params = new URLSearchParams();
 
+  params.set('page', String(page));
+  params.set('limit', String(limit));
+  
   Object.entries(filters).forEach(([key, value]) => {
     if (value === undefined || value === null || value === '') {
       return;
@@ -142,7 +145,7 @@ export async function getProgramsByUniversity(universityId, filters = {}, page =
 
   params.set('page', String(page));
   params.set('limit', String(limit));
-  
+
   Object.entries(filters).forEach(([key, value]) => {
     if (value === undefined || value === null || value === '') {
       return;

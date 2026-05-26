@@ -2,7 +2,7 @@ from bson import ObjectId
 from pymongo.collection import Collection
 import datetime
 from app.database.base_collection_controller import BaseCollectionController
-from typing import Optional, Tuple
+from typing import Tuple
 
 class ProgramsCollectionController(BaseCollectionController):
     def __init__(self, collection: Collection):

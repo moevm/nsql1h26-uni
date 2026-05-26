@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException, Header, Query
 from app.database.universities_db import UniversitiesDataBase
 from app.core.dependencies import get_db_connection
 from app.models import UniversityCreate, UniversityUpdate
@@ -33,6 +33,8 @@ async def get_all_universities(
     max_rating: float | None = None,
     min_programs_count: int | None = None,
     max_programs_count: int | None = None,
+    page: int = Query(1, ge=1, description="Номер страницы"),
+    limit: int = Query(10, ge=1, le=100, description="Количество записей на странице"),
     db: UniversitiesDataBase = Depends(get_db_connection),
 ):
     """Получить все университеты"""
@@ -70,17 +72,27 @@ async def get_all_universities(
     if min_programs_count is not None or max_programs_count is not None:
         programs_count = (min_programs_count, max_programs_count)
 
-    universities = universities_controller.find_universities_by_filters(
+    universities, total_count = universities_controller.find_universities_by_filters(
         name=name,
         city=city,
         has_dormitory=has_dormitory,
         military_dept=military_dept,
         rating=rating,
         programs_count=programs_count,
+        page=page,
+        limit=limit,
     )
+
     for uni in universities:
         uni["_id"] = str(uni["_id"])
-    return universities
+
+    return {
+        "items": universities,
+        "total": total_count,
+        "page": page,
+        "limit": limit,
+        "pages": (total_count + limit - 1) // limit
+    }
 
 
 @router.get("/{university_id}")
@@ -96,20 +108,6 @@ async def get_university(university_id: str, db: UniversitiesDataBase = Depends(
 
     university["_id"] = str(university["_id"])
     return university
-
-
-@router.get("/search/by-name/{name}")
-async def search_universities_by_name(name: str, db: UniversitiesDataBase = Depends(get_db_connection)):
-    """Поиск университетов по префиксу названия"""
-    universities_controller = db.get_universities_collection()
-    if not universities_controller:
-        raise HTTPException(status_code=500, detail="База данных недоступна")
-
-    universities = universities_controller.find_universities_by_prefix(name)
-    for uni in universities:
-        uni["_id"] = str(uni["_id"])
-    return universities
-
 
 @router.post("/", status_code=201)
 async def create_university(

@@ -3,7 +3,7 @@ from pymongo.collection import Collection
 import datetime
 import re
 from app.database.base_collection_controller import BaseCollectionController
-
+from typing import Tuple
 
 class UniversitiesCollectionController(BaseCollectionController):
     def __init__(self, collection: Collection):
@@ -82,7 +82,8 @@ class UniversitiesCollectionController(BaseCollectionController):
                                      website: str = None, foundation_year: int = None, students_count: int = None,
                                      faculties_count: int = None,
                                      phone: str = None, email: str = None, rating: tuple[float | None, ...] = None,
-                                     programs_count: tuple[float | None, ...] = None, comment: str = None) -> list:
+                                     programs_count: tuple[float | None, ...] = None, comment: str = None,
+                                     page: int = 1, limit: int = 10) ->  Tuple[list, int]:
         """Возвращает список всех найденных университетов. Элементы списка - словари со всеми полями.
         city, website, email не зависят от регистра."""
         if not self._check_collection():
@@ -137,9 +138,16 @@ class UniversitiesCollectionController(BaseCollectionController):
                 "$regex": f"{comment}",
                 "$options": "i"
             }
-        universitiesInDB = self._collection.find(universityFilter)
-        result = [university for university in universitiesInDB]
-        return result
+        total_count = self._collection.count_documents(universityFilter)
+        
+        
+        skip = (page - 1) * limit
+        universities_cursor = self._collection.find(universityFilter).skip(skip).limit(limit)
+        
+        
+        result = list(universities_cursor)
+
+        return result, total_count
 
     def update_university(self, id_str: str, name: str = None, city: str = None, address: str = None, has_dormitory: bool = None,
                           foundation_year: int = None, students_count: int = None,

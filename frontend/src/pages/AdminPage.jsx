@@ -186,7 +186,10 @@ const AdminPage = () => {
   const [totalProgramsCount, setTotalProgramsCount] = useState(0);
 
   const debounceTimeoutRef = useRef(null);
+  const universityDebounceTimeoutRef = useRef(null);
 
+  const [totalUniversitiesCount, setTotalUniversitiesCount] = useState(0);
+  const [totalUniversityPages, setTotalUniversityPages] = useState(0);
 
   const handleProgramSearch = (value) => {
     if (debounceTimeoutRef.current) {
@@ -199,12 +202,31 @@ const AdminPage = () => {
     }, 500);
   };
 
-  const fetchUniversities = async () => {
+  const handleUniversitySearch = (value) => {
+    if (universityDebounceTimeoutRef.current) {
+      clearTimeout(universityDebounceTimeoutRef.current);
+    }
+
+    universityDebounceTimeoutRef.current = setTimeout(() => {
+      setSearchQuery(value);
+      setCurrentPage(1);
+    }, 500);
+  };
+
+  const fetchUniversities = async (page = 1, limit = 4, search = '') => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getUniversities();
-      const transformedData = data.map(uni => ({
+
+      const filters = {};
+      if (search && search.trim()) {
+        filters.name = search.trim();
+      }
+
+      const response = await getUniversities(filters, page, limit);
+
+      console.log('Universities response:', response);
+      const transformedData = response.items.map(uni => ({
         id: uni._id,
         name: uni.name,
         city: uni.city,
@@ -213,6 +235,9 @@ const AdminPage = () => {
         updatedAt: uni.updatedAt ? new Date(uni.updatedAt).toLocaleDateString('ru-RU') : '-',
       }));
       setUniversities(transformedData);
+      setTotalUniversitiesCount(response.total);
+      setTotalUniversityPages(response.pages);
+      setCurrentPage(response.page);
     } catch (err) {
       setError(err.message || 'Ошибка при загрузке вузов');
       console.error('Ошибка загрузки вузов:', err);
@@ -222,8 +247,8 @@ const AdminPage = () => {
   };
 
   useEffect(() => {
-    fetchUniversities();
-    fetchPrograms(currentProgramPage, programItemsPerPage);
+    fetchUniversities(currentPage, itemsPerPage, searchQuery);
+    fetchPrograms(currentProgramPage, programItemsPerPage, programSearchQuery);
   }, []);
 
   // useEffect для загрузки при смене страницы
@@ -231,17 +256,31 @@ const AdminPage = () => {
     fetchPrograms(currentProgramPage, programItemsPerPage, programSearchQuery);
   }, [currentProgramPage, programSearchQuery]);
 
-  const fetchPrograms = async (page = 1, limit = 4, searchQuery = '') => {
+  useEffect(() => {
+    fetchUniversities(currentPage, itemsPerPage, searchQuery);
+  }, [currentPage, searchQuery]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+      if (universityDebounceTimeoutRef.current) {
+        clearTimeout(universityDebounceTimeoutRef.current);
+      }
+    };
+  }, []);
+  const fetchPrograms = async (page = 1, limit = 4, search = '') => {
     try {
       setProgramsLoading(true);
       setProgramsError(null);
       console.log('Загрузка страницы:', page, 'Лимит:', limit);
-      console.log("programSearchQuery " + searchQuery)
+      console.log("programSearchQuery " + search)
       console.log("programSearchQuery " + programSearchQuery)
 
       const filters = {};
 
-      if (searchQuery && searchQuery.trim()) {
+      if (search && searchQuery.trim()) {
         filters.name = searchQuery.trim();
       }
       const response = await getPrograms(
@@ -273,9 +312,7 @@ const AdminPage = () => {
     }
   };
 
-  const filteredUniversities = universities.filter(uni =>
-    uni.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+
 
   const getUniversityNameById = (universityId) => {
     const university = universities.find((item) => item.id === universityId);
@@ -284,9 +321,8 @@ const AdminPage = () => {
 
   const [totalPages, setTotalPages] = useState(0);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedUniversities = filteredUniversities.slice(startIndex, startIndex + itemsPerPage);
   const totalProgramPages = Math.ceil(totalProgramsCount / programItemsPerPage);
-
+  
   const handleEditUniversity = async (id) => {
     try {
       setSubmitLoading(true);
@@ -368,12 +404,7 @@ const AdminPage = () => {
 
       await deleteUniversity(universityToDelete.id, adminSession.adminId);
 
-      setUniversities((prev) => {
-        const updated = prev.filter((item) => item.id !== universityToDelete.id);
-        const newTotalPages = Math.max(1, Math.ceil(updated.length / itemsPerPage));
-        setCurrentPage((prevPage) => Math.min(prevPage, newTotalPages));
-        return updated;
-      });
+      await fetchUniversities(currentPage, itemsPerPage, searchQuery);
 
       setPrograms((prev) => {
         const updated = prev.filter((item) => item.universityId !== universityToDelete.id);
@@ -1087,11 +1118,8 @@ const AdminPage = () => {
         <input
           className={styles.searchInput}
           placeholder="Поиск вуза..."
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setCurrentPage(1);
-          }}
+          defaultValue={searchQuery}
+          onChange={(e) => handleUniversitySearch(e.target.value)}
         />
 
         {loading && (
@@ -1117,7 +1145,8 @@ const AdminPage = () => {
               <span>Действия</span>
             </div>
 
-            {paginatedUniversities.map(uni => (
+            {/* Используем universities напрямую, без slice */}
+            {universities.map(uni => (
               <div key={uni.id} className={styles.uniRow}>
                 <span>{uni.name}</span>
                 <span>{uni.city}</span>
@@ -1130,8 +1159,6 @@ const AdminPage = () => {
                   <button
                     className={styles.actionBtn}
                     onClick={() => handleEditUniversity(uni.id)}
-                    aria-label="Редактировать"
-                    data-tooltip="Редактировать"
                   >
                     ✎
                   </button>
@@ -1139,8 +1166,6 @@ const AdminPage = () => {
                     className={styles.actionBtn}
                     onClick={() => handleDeleteUniversity(uni.id)}
                     disabled={deletingUniversityId === uni.id}
-                    aria-label="Удалить"
-                    data-tooltip="Удалить"
                   >
                     {deletingUniversityId === uni.id ? '...' : '🗑'}
                   </button>
@@ -1148,36 +1173,48 @@ const AdminPage = () => {
               </div>
             ))}
 
-            {totalPages > 1 && (
+            {/* Пагинация для университетов */}
+            {totalUniversityPages > 1 && (
               <div className={styles.pagination}>
                 <span style={{ color: '#4b637a' }}>
-                  {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredUniversities.length)} из {filteredUniversities.length}
+                  {startIndex + 1}-{Math.min(startIndex + itemsPerPage, totalUniversitiesCount)} из {totalUniversitiesCount}
                 </span>
                 <div className={styles.pageNumbers}>
-                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(page => (
-                    <button
-                      key={page}
-                      className={`${styles.pageBtn} ${currentPage === page ? styles.active : ''}`}
-                      onClick={() => setCurrentPage(page)}
-                    >
-                      {page}
-                    </button>
-                  ))}
-                  {totalPages > 5 && (
-                    <>
-                      <span className={styles.dots}>⋯</span>
-                      <button
-                        className={styles.pageBtn}
-                        onClick={() => setCurrentPage(totalPages)}
-                      >
-                        {totalPages}
-                      </button>
-                    </>
-                  )}
                   <button
                     className={styles.pageBtn}
-                    onClick={() => setCurrentPage(Math.min(currentPage + 1, totalPages))}
-                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    ←
+                  </button>
+
+                  {Array.from({ length: Math.min(totalUniversityPages, 5) }, (_, i) => {
+                    let pageNum;
+                    if (totalUniversityPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalUniversityPages - 2) {
+                      pageNum = totalUniversityPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+
+                    return (
+                      <button
+                        key={pageNum}
+                        className={`${styles.pageBtn} ${currentPage === pageNum ? styles.active : ''}`}
+                        onClick={() => setCurrentPage(pageNum)}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    className={styles.pageBtn}
+                    onClick={() => setCurrentPage(prev => Math.min(totalUniversityPages, prev + 1))}
+                    disabled={currentPage === totalUniversityPages}
                   >
                     →
                   </button>
